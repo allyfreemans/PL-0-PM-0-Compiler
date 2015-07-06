@@ -22,8 +22,6 @@ void parser(int flag){
 
     generateMCode();
 
-    fclose(fileCode);
-    fclose(fileLexTable);
 }
 
 void printSymTable(){
@@ -35,10 +33,11 @@ void printSymTable(){
 }
 
 
-void createSym(FILE *fileLexTable){
+void createSym(){
     int i, sym=0, mult, runs=0;//don't remove int i
     int position = 0, L = 0, runFlag, scanFlag = 0, commaFlag = 0, commaFlag2 = 0;
-    char *name, c;
+    char name[identMax];
+    char c;
 
     fileLexTable = fopen(nameLexTableList,"r");
     if(fileLexTable == NULL)
@@ -47,19 +46,7 @@ void createSym(FILE *fileLexTable){
     c = 'a'; // set dummy to make sure default value isn't EOF
     while (c != EOF){ //Create the symbol table
         if(scanFlag != 1){
-            c = fgetc(fileLexTable);
-            mult = 100;
-            runs = 0;
-            while((int)c > 32){
-                runs++;
-                sym += ((int)c - 48)*mult;
-                mult /= 10;
-                c = fgetc(fileLexTable);
-            }
-            if(runs == 1)
-                sym /= 100;
-            else if (runs == 2)
-                sym /= 10;
+            fscanf(fileLexTable,"%d", &sym);
         }
         else if(scanFlag == 1){
             scanFlag = 0;
@@ -68,84 +55,48 @@ void createSym(FILE *fileLexTable){
             sym = 28;
         if(commaFlag2 == 1)
             sym = 29;
+        printf("o[%d]\n", sym);
         if(sym == 21) //begin
             L++;
         else if(sym == 22) //end
             L--;
-        else if(sym == 29){
+        else if(sym == 29){//var
                 sym = 0;
                 if(commaFlag2 == 1)
                     commaFlag2 = 0;
-                else
-                    fscanf(fileLexTable,"%s",name); // get rid of dummy "2"
+                else{
+                    fscanf(fileLexTable,"%d", &sym); // get rid of dummy "2"
+                }
                 fscanf(fileLexTable,"%s",name);
-                c = fgetc(fileLexTable); // " "
+                printf("'%s'\n", name);
                 position = hashMe(name);
                     thisTable[position].kind = 2;
                     thisTable[position].level = L;
                     strcpy(thisTable[position].name,name);
-                c = fgetc(fileLexTable); //"#"
-                runFlag = 1;
-                mult = 100;
-                runs = 0;
-                sym = 0;
-                while((int)c > 32){
-                    runs++;
-                    sym += ((int)c - 48)*mult;
-                    mult /= 10;
-                    c = fgetc(fileLexTable);
-                }
-                if(runs == 1)
-                    sym /= 100;
-                else if (runs == 2)
-                    sym /= 10;
-                if(sym == 17)
+                fscanf(fileLexTable,"%d", &sym);
+                scanFlag = 1;
+                if(sym == commasym){
+                    fscanf(fileLexTable,"%d", &sym);
                     commaFlag2 = 1;
+                }
         }
-        else if(sym == 28){ //If commas found, do it all again.
+        else if(sym == 28){ //CONST If commas found, do it all again.
             commaFlag = 0;
-            sym = 0;
-            fscanf(fileLexTable,"%s",name); //ON PURPOSE, get rid of '2'
-            fscanf(fileLexTable,"%s",name);
-            c = fgetc(fileLexTable);
-            c = fgetc(fileLexTable); //now on 'varname'
-            c = fgetc(fileLexTable); // now on ' '
-            c = fgetc(fileLexTable); // now on '3'
-            c = fgetc(fileLexTable); // now on ' '
-            c = fgetc(fileLexTable); // now on '#'
-            mult = 100;
-            runs = 0;
-            sym = 0;
-            while((int)c > 32){
-                runs++;
-                sym += ((int)c - 48)*mult;
-                mult /= 10;
-                c = fgetc(fileLexTable);
-            }
-            if(runs == 1)
-                sym /= 100;
-            else if (runs == 2)
-                sym /= 10;
+            printf("28[%d] = ", sym);
+            fscanf(fileLexTable,"%d", &sym); //ON PURPOSE, get rid of '2'
+            fscanf(fileLexTable,"%s",name); //varname
+            printf("'%s' = ", name);
+            fscanf(fileLexTable,"%d", &sym); // "9"
+            fscanf(fileLexTable,"%d", &sym); // "3"
+            fscanf(fileLexTable,"%d", &sym); // "##"
+            printf("%d\n", sym);
             position = hashMe(name);
             thisTable[position].kind = 1;
             thisTable[position].level = L;
             strcpy(thisTable[position].name,name);
             thisTable[position].val = sym;
             scanFlag = 1;
-            c = fgetc(fileLexTable); // "#"
-            mult = 100;
-            runs = 0;
-            sym = 0;
-            while((int)c > 32){
-                runs++;
-                sym += ((int)c - 48)*mult;
-                mult /= 10;
-                c = fgetc(fileLexTable);
-            }
-            if(runs == 1)
-                sym /= 100;
-            else if (runs == 2)
-                sym /= 10;
+            fscanf(fileLexTable,"%d", &sym); // "sym"
             if(sym == 17)
                 commaFlag = 1;
         }
@@ -157,8 +108,20 @@ void createSym(FILE *fileLexTable){
                 printError(11);
             }
         }
-        sym = 0;
-        runs = 0;
+        else if(sym == procsym){
+            scanFlag = 0;
+            fscanf(fileLexTable,"%d", &sym); // "2"
+            fscanf(fileLexTable,"%s",name); //varname
+            position = hashMe(name);
+            thisTable[position].kind = 3;
+            thisTable[position].level = L;
+            strcpy(thisTable[position].name,name);
+            scanFlag = 1;
+            fscanf(fileLexTable,"%d", &sym);
+        }
+        else if(sym == periodsym){
+            c = EOF;
+        }
     }
     fclose(fileLexTable);
 }
