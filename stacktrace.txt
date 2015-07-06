@@ -1,0 +1,5 @@
+Line  OP   L  M
+
+
+                   pc  bp  sp  stack
+Initial values      0   1   0
