@@ -4,6 +4,11 @@
 FILE *fileCode;
 FILE *fileLexTable;
 
+typedef struct variable{
+    char varName[identMax];
+    int position;
+} varArray;
+
 symTable thisTable[MAX_SYMBOL_TABLE_SIZE];
 
 void printSymTable();
@@ -140,20 +145,46 @@ int hashMe(char name[]){ //The hash function will be (length *E(char * char's po
 }
 
 void generateMCode(){
+    int sym = 0, procFlag = 0, lines = 0;
+    char varname[identMax];
     fileCode = fopen(nameMCode,"w");
     if(fileCode == NULL)
         printError(ERROR_INVALID_FILE);
     fileLexTable = fopen(nameLexTableList,"r");
-    //Starting from line 0
-    //jump to var/const declarations, top to bottom
-        //if const
-            //6 0 6 increment M
-    //9 0 2 on bottom
 
-
-
-
-
+    //1) find main procedure
+    fscanf(fileLexTable,"%d", &sym);
+    printf("%d != %d, && %d > 0\n", sym, beginsym, procFlag);
+    while(sym != beginsym){
+        printf("%d lines: Found [%d]\n",lines, sym);
+        if(sym == procsym)
+            procFlag ++;
+        else if(procsym > 0 && sym == endsym)
+            procFlag--;
+        else if((sym == beginsym) || (sym == semicolonsym))
+            lines++;
+        if(sym == 2){
+            fscanf(fileLexTable,"%s", varname);
+            printf("%d lines: Found [%s]\n",lines, varname);
+            fscanf(fileLexTable,"%d", &sym);
+        }
+        else
+            fscanf(fileLexTable,"%d", &sym);
+        if((sym == beginsym) && (procFlag > 0)){
+            lines++;
+            printf("%d lines: Found [%d]\n",lines, sym);
+            fscanf(fileLexTable,"%d", &sym);
+        }
+    }
+    printf("%d lines (on line %d): Found [%d]\n",lines, lines+1,sym);
+    //2) count number of variables, log their pos into array
+        //start a new file pointer
+        //count the number of vars inside main proc
+        //log their positions in the stack
+        //close second file pointer
+    //3) initialize program with 6 0 # found above
+    //4) go through main lines as such
+    //5) halt/end.
 
     fclose(fileCode);
 }
