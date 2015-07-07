@@ -4,7 +4,7 @@
 #include "vm.h"
 #include "header.h"
 
-/* compile: gcc complier.c -o compile
+/* compile: gcc compiler.c -o compile
    run: ./compile  -a -v -l */
 
 int main(int argc, char *argv[]){
