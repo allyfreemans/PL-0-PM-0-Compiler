@@ -22,7 +22,7 @@ Work Log:
  
  - header.h   :: n/a 
  
- current build works on EUSTIS?: N
+ current build works on EUSTIS?: Y
  current release works on EUSTIS?: Y
  
  compile: gcc compiler.c -o compile
