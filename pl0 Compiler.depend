@@ -1,12 +1,12 @@
 # depslib dependency file v1.0
-1436214618 source:c:\users\creedtora\downloads\pl0 compiler\complier.c
+1436245508 source:c:\users\creedtora\downloads\pl0 compiler\complier.c
 	<stdio.h>
 	"scanner.h"
 	"parser.h"
 	"vm.h"
 	"header.h"
 
-1436214522 c:\users\creedtora\downloads\pl0 compiler\scanner.h
+1436245969 c:\users\creedtora\downloads\pl0 compiler\scanner.h
 	"header.h"
 
 1436201174 c:\users\creedtora\downloads\pl0 compiler\header.h
@@ -15,9 +15,9 @@
 	<string.h>
 	<time.h>
 
-1436234204 c:\users\creedtora\downloads\pl0 compiler\parser.h
+1436245795 c:\users\creedtora\downloads\pl0 compiler\parser.h
 	"header.h"
 
-1435697023 c:\users\creedtora\downloads\pl0 compiler\vm.h
+1436242480 c:\users\creedtora\downloads\pl0 compiler\vm.h
 	"header.h"
 

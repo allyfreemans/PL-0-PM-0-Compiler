@@ -1,7 +1,7 @@
-const n = 13, o = 2;
-var i, h;
-const k = 7;
+var
+x, y;
 begin
- i:=n;
- h:=o;
+y := 3;
+/* This is a comment */
+x := y + 56;
 end.

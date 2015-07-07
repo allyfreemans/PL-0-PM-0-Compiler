@@ -48,8 +48,8 @@ void scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
     lexTable *start = NULL;
 
     start = removeComments(flag);
-    printLexeme(start, 0);
-
+    printLexeme(start, flag);
+    //printf("closing\n");
     fclose(fileCode);
 }
 
@@ -315,7 +315,7 @@ void analyzeCode(lexTable *front, int flag){
     int rwflag = 0;
     int procFlag = 0;
 
-    printList(current, flag);
+    //printf("got here.\n");
 
     front = newLexeme(front, "err", errsym); //Padding! You need that last pos occupied with a dummy.
 
@@ -423,14 +423,15 @@ void analyzeCode(lexTable *front, int flag){
                 printError(-52);
         }
     }
+    //printf("ended branch.\n");
     if(current->tokenType != periodsym) //end "."
         printError(9);
 
     current = front;
-    while(current->next){
+    while(current->next != NULL){
         current = current->next;
     }
-    current->next = NULL;
+    //printf("ended whole.\n");
 }
 lexTable *statement(lexTable *current){ // "statement"
         if(!current->next || !current)
@@ -601,11 +602,14 @@ void printTable(lexTable *lexs){
 
 void printList(lexTable *lexs, int flag){
     lexTable *current = lexs;
+    int i;
     if(flag)
         printf("\nLexeme List:\n");
-
-    while(current){
-        if(flag){
+    //printf("dummy for loop\n");
+    for(i=0; i<9999; i++){
+        if(current == NULL)
+            break;
+        if(flag == 1){
             printf("%d ", current->tokenType);
             if(current->tokenType == identsym || current->tokenType == numbersym){
                 printf("%s ", current->lexeme);
@@ -619,7 +623,6 @@ void printList(lexTable *lexs, int flag){
     }
     if(flag)
         printf("\n");
-    fprintf(fileLexTableList,"\n\n");
 }
 
 
