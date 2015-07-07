@@ -1,8 +1,7 @@
 var x, y;
 const z = 5;
 begin
-y := 3;
-/* This is a comment */
-x := y + 56;
-y := z + z;
+  y := 3;
+  x := 4 - 3;
+  y := 6 - 1;
 end.

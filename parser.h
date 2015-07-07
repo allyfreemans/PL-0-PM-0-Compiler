@@ -3,7 +3,6 @@
 //Files
 FILE *fileCode;
 FILE *fileLexTable;
-FILE *fileLexTable2;
 FILE *readFile;
 
 typedef struct variable{
@@ -12,11 +11,15 @@ typedef struct variable{
 } varArray;
 
 symTable thisTable[MAX_SYMBOL_TABLE_SIZE];
+int nStack = 3;
 
 void printSymTable();
 void printMCode();
 void createSym();
 void generateMCode();
+void numFound(int returnPos, varArray vars[], int returnF);
+void varFound(int returnPos, varArray vars[], int returnF);
+void operationFound(int sym, int returnPos, varArray vars[]);
 
 void parser(int flag){
 
@@ -164,6 +167,7 @@ int hashMe(char name[]){ //The hash function will be (length *E(char * char's po
 }
 
 void generateMCode(){
+    int returnPos, temPos, run;
     int i, j = 0,numVar = 0, numConst = 0, hashy=0;
     varArray vars[100];
     int sym = 0, procFlag = 0, lines = 0;
@@ -217,7 +221,8 @@ void generateMCode(){
             }
         }
     //3) initialize program with 6 0 # found above
-    fprintf(fileCode,"6 0 %d\n",j+1);
+    fprintf(fileCode,"6 0 %d\n",3+j);
+    nStack = 3+j;
     //3a) add const values into stack!
     j = 0;
     for(i=0; i<MAX_SYMBOL_TABLE_SIZE; i++){
@@ -229,9 +234,89 @@ void generateMCode(){
         }
     }
     //4) go through main lines as such
-    //TODO
+    while(sym != periodsym){
+        fscanf(fileLexTable,"%d", &sym);
+        switch(sym){
+            case identsym: // var := ????
+                fscanf(fileLexTable,"%s", &varname); //variable
+                //Get position of var
+                returnPos = 0;
+                run = 1;
+                while(run != 0){
+                    run = strcmp(varname,vars[returnPos].name);
+                    returnPos++;
+                }
+                returnPos--;
+                fscanf(fileLexTable,"%d", &sym); // :=
+
+                fscanf(fileLexTable,"%d", &sym); // "???"
+
+                if(sym == numbersym)
+                    numFound(returnPos, vars, 0);
+                else if (sym == 2)
+                    varFound(returnPos, vars, 0);
+        }
+    }
     //5) halt/end.
     fprintf(fileCode,"9 0 2\n");
 
     fclose(fileCode);
+}
+
+void numFound(int returnPos, varArray vars[], int returnF){
+    int sym;
+    fscanf(fileLexTable,"%d", &sym);//"##"
+    fprintf(fileCode,"1 0 %d\n",sym);
+    if(!returnF){
+        fprintf(fileCode,"4 0 %d\n", 3+returnPos); //Store in stack
+        fscanf(fileLexTable,"%d", &sym);//"##"
+        if(sym == 2 || sym == numbersym)
+            printError(20);
+        else if(sym == semicolonsym)
+            return;
+        else
+            operationFound(sym, returnPos, vars);
+    }
+}
+
+void varFound(int returnPos, varArray vars[], int returnF){
+    int temPos = 0, run;
+    char varname[999];
+    fscanf(fileLexTable,"%s", &varname);
+    run = strcmp(varname,vars[temPos++].name);
+    while(run != 0){
+        run = strcmp(varname,vars[temPos++].name);
+    }
+    temPos--;
+    fprintf(fileCode,"3 0 %d\n", 3+temPos);//Add to stack
+    if(!returnF)
+        fprintf(fileCode,"4 0 %d\n", 3+returnPos); //Store in stack
+
+}
+
+void operationFound(int sym, int returnPos, varArray vars[]){
+    char varname[999];
+    switch(sym){
+        case minussym:
+            fprintf(fileCode,"3 0 %d\n", 3+returnPos);//Add to stack
+            fscanf(fileLexTable,"%d", &sym);//var OR num
+            if(sym == 2)
+                varFound(returnPos,vars,1);
+            else if(sym == numbersym)
+                numFound(returnPos,vars,1);
+            fprintf(fileCode,"2 0 3\n");
+            fprintf(fileCode,"4 0 %d\n", 3+returnPos);
+            break;
+
+        case plussym:
+            fprintf(fileCode,"3 0 %d\n", 3+returnPos);//Add to stack
+            fscanf(fileLexTable,"%d", &sym);//var OR num
+            if(sym == 2)
+                varFound(returnPos,vars,1);
+            else if(sym == numbersym)
+                numFound(returnPos,vars,1);
+            fprintf(fileCode,"2 0 2\n");
+            fprintf(fileCode,"4 0 %d\n", 3+returnPos);
+            break;
+    }
 }
