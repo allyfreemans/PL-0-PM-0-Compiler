@@ -4,7 +4,7 @@
 | begin            | 6 0 6        | 10   | 0 0 0 n i h + # var of main                    |
 +------------------+--------------+------+------------------------------------------------+
 | Const n = 13;    | 1 0 13       | 0    | Create const “13”                              |
-|				   | 4 0 4 		  |      | Put in var position 1 (const come first!)      |
+|				           | 4 0 4 	   	  |      | Put in var position 1 (const come first!)      |
 +------------------+--------------+------+------------------------------------------------+
 | i := 3;          | 1 0 3        | 11   | Create "3"                                     |
 | var i;           | 4 0 5        | 1    | put in var position 2                          |
