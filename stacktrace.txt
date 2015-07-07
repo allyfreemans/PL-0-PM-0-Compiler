@@ -1,5 +1,21 @@
 Line  OP   L  M
+   0  INC  0   6
+   1  LIT  0   7
+   2  STO  0   3
+   3  LIT  0  13
+   4  STO  0   4
+   5  LIT  0   2
+   6  STO  0   5
+   7  SIO  0   2
 
 
                    pc  bp  sp  stack
 Initial values      0   1   0
+   0  INC  0   6    1   1   6  0 0 0 0 0 0 
+   1  LIT  0   7    2   1   7  0 0 0 0 0 0 7 
+   2  STO  0   3    3   1   6  0 0 0 7 0 0 
+   3  LIT  0  13    4   1   7  0 0 0 7 0 0 13 
+   4  STO  0   4    5   1   6  0 0 0 7 13 0 
+   5  LIT  0   2    6   1   7  0 0 0 7 13 0 2 
+   6  STO  0   5    7   1   6  0 0 0 7 13 2 
+   7  SIO  0   2 
