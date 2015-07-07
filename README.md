@@ -24,3 +24,6 @@ Work Log:
  
  current build works on EUSTIS?: N
  current release works on EUSTIS?: Y
+ 
+ compile: gcc compiler.c -o compile
+ run: ./compile (-a) (-l) (-v)

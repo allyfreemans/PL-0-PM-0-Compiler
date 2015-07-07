@@ -1,7 +1,8 @@
-var
-x, y;
+var x, y;
+const z = 5;
 begin
 y := 3;
 /* This is a comment */
 x := y + 56;
+y := z + z;
 end.
