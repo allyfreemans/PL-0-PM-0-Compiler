@@ -21,9 +21,9 @@ void generateMCode();
 void parser(int flag){
 
     createSym();
-    printf("\nNo errors, program is syntactically correct!\n");
+    printf("\nNo errors, program is syntactically correct!\n\n");
 
-    printSymTable();
+    //printSymTable();
 
     generateMCode();
 
@@ -38,6 +38,7 @@ void printSymTable(){
     for(i=0; i<MAX_SYMBOL_TABLE_SIZE; i++){
         printf("%d %s %d %d %d \n", thisTable[i].kind, thisTable[i].name, thisTable[i].val, thisTable[i].level, thisTable[i].addr);
     }
+    printf("\n\n");
 }
 
 void printMCode(){
@@ -61,7 +62,7 @@ void createSym(){
     if(fileLexTable == NULL)
         printError(ERROR_INVALID_FILE);
 
-    printf("\n\nwelcome to sym!\n");
+    //printf("\n\nwelcome to sym!\n");
 
     c = 'a'; // set dummy to make sure default value isn't EOF
     while (c != EOF){ //Create the symbol table
@@ -75,7 +76,7 @@ void createSym(){
             sym = 28;
         if(commaFlag2 == 1)
             sym = 29;
-        printf("o[%d]\n", sym);
+        //printf("o[%d]\n", sym);
         if(sym == 21) //begin
             L++;
         else if(sym == 22) //end
@@ -87,9 +88,9 @@ void createSym(){
                 else{
                     fscanf(fileLexTable,"%d", &sym); // get rid of dummy "2"
                 }
-                printf("2='%d'\n", sym);
+                //printf("2='%d'\n", sym);
                 fscanf(fileLexTable,"%s",name);
-                printf("'%s'\n", name);
+                //printf("'%s'\n", name);
                 position = hashMe(name);
                     thisTable[position].kind = 2;
                     thisTable[position].level = L;
@@ -103,14 +104,14 @@ void createSym(){
         }
         else if(sym == 28){ //CONST If commas found, do it all again.
             commaFlag = 0;
-            printf("28[%d] = ", sym);
+            //printf("28[%d] = ", sym);
             fscanf(fileLexTable,"%d", &sym); //ON PURPOSE, get rid of '2'
             fscanf(fileLexTable,"%s",name); //varname
-            printf("'%s' = ", name);
+            //printf("'%s' = ", name);
             fscanf(fileLexTable,"%d", &sym); // "9"
             fscanf(fileLexTable,"%d", &sym); // "3"
             fscanf(fileLexTable,"%d", &sym); // "##"
-            printf("%d\n", sym);
+            //printf("%d\n", sym);
             position = hashMe(name);
             thisTable[position].kind = 1;
             thisTable[position].level = L;
@@ -143,9 +144,9 @@ void createSym(){
         else if(sym == periodsym){
             c = EOF;
         }
-        printf("loop ");
+        //printf("loop ");
     }
-    printf("completed.\n");
+    //printf("completed.\n");
     fclose(fileLexTable);
 }
 

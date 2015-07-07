@@ -25,9 +25,9 @@ int main(int argc, char *argv[]){
     scanner(l);
     //printf("Scanner done.\n");
     parser(a);
-    printf("Parser done.\n");
+    //printf("Parser done.\n");
     vm(v);
-    printf("VM done.\n");
+    //printf("VM done.\n");
 
     return 0;
 }
