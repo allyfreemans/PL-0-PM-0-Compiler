@@ -1,2 +1,3 @@
-# pm0
-pm0 compiler, scanner, parser, etc.
+# pl/0
+pl/0 compiler, scanner, parser, etc.
+Work in  progress! 
