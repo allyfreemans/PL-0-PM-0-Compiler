@@ -22,4 +22,5 @@ Work Log:
  
  - header.h   :: n/a 
  
- current build works on EUSTIS?: Y
+ current build works on EUSTIS?: N
+ current release works on EUSTIS?: Y
