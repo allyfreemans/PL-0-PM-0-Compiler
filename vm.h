@@ -6,7 +6,7 @@ const char* OPCODE_STRINGS[] = {"FCH", "LIT", "OPR", "LOD", "STO", "CAL", "INC",
 const char* STACK_OPERATION_STRINGS[] = {"RET", "NEG", "ADD", "SUB", "MUL", "DIV", "ODD", "MOD", "EQL", "NEQ", "LSS", "LEQ", "GTR", "GEQ"};
 const char* SIO_OPERATION_STRINGS[] = {"", "SOT", "SIN"};
 
-enum OPCODE {FCH, LIT, OPR, LOD, STO, CAL, INC, JMP, JNC, SIO};
+enum OPCODE {FCH, LIT, OPR, LOD, STO, CAL, INC, JMP, JPC, SIO};
 enum STACK_OPERATION {RET, NEG, ADD, SUB, MUL, DIV, ODD, MOD, EQL, NEQ, LSS, LEQ, GTR, GEQ};
 enum SIO_OPERATION {SOT = 1, SIN};
 
@@ -163,11 +163,13 @@ void execute_cycle(int flag){
 		case JMP:	//Jump to the instruction at IR.M
 			PC = IR.M;
 			break;
-		case JNC:	//Jump to the instruction at IR.M if == 0
+		case JPC:	//Jump to the instruction at IR.M if == 0
 			if(stack[SP] == 0){
 				PC = IR.M;
-				SP--;
+                SP--;
 			}
+			else
+                SP--;
 			break;
 		case SIO:	//perform standard IO op, depending on the instruction register
 			if(IR.M == 0){
