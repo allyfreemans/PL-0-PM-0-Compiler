@@ -10,19 +10,19 @@ Work Log:
  - parser.h   :: wip
  
 	progress: handles const
-			  generates symbol table
-			  tests for undeclared vars
+		  generates symbol table
+		  tests for undeclared vars
+		  handles := XXX;
+		  handles read var;
+		  handles write var;
 			  
-	needed:   handles := XXX
-			  handles read var
-			  handles write var
-			  handles if then else
+	needed:   handles if then else
 			  
  - vm.h       :: done
  
  - header.h   :: n/a 
  
- current build works on EUSTIS?: Y
+ current build works on EUSTIS?: ?
  current release works on EUSTIS?: Y
  
  compile: gcc compiler.c -o compile

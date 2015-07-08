@@ -12,6 +12,7 @@ typedef struct variable{
 
 symTable thisTable[MAX_SYMBOL_TABLE_SIZE];
 int nStack = 3;
+int readAlready = 0;
 
 void printSymTable();
 void printMCode();
@@ -235,9 +236,41 @@ void generateMCode(){
     }
     //4) go through main lines as such
     while(sym != periodsym){
-        fscanf(fileLexTable,"%d", &sym);
+        if(!readAlready)
+            fscanf(fileLexTable,"%d", &sym);
+        if(readAlready)
+            readAlready = 0;
         switch(sym){
+
+            case endsym:
+                break;
+
             case identsym: // var := ????
+                //printf("into: '%d'.\n", sym);
+                fscanf(fileLexTable,"%s", &varname); //variable
+                //printf("a looking for '%s'.\n", varname);
+                //Get position of var
+                returnPos = 0;
+                run = 1;
+                while(run != 0){
+                    run = strcmp(varname,vars[returnPos].name);
+                    returnPos++;
+                }
+                returnPos+=2;
+                printf("  found at pos %d.\n", returnPos);
+                fscanf(fileLexTable,"%d", &sym); // :=
+
+                fscanf(fileLexTable,"%d", &sym); // "???"
+
+                if(sym == numbersym){ //If it's a number
+                    numFound(returnPos, vars, 0);
+                }
+                else if (sym == 2) // If it's a var
+                    varFound(returnPos, vars, 0);
+                break;
+
+            case readsym:
+                fscanf(fileLexTable,"%d", &sym); // "2"
                 fscanf(fileLexTable,"%s", &varname); //variable
                 //Get position of var
                 returnPos = 0;
@@ -246,15 +279,69 @@ void generateMCode(){
                     run = strcmp(varname,vars[returnPos].name);
                     returnPos++;
                 }
-                returnPos--;
-                fscanf(fileLexTable,"%d", &sym); // :=
+                returnPos+=2;
+                fprintf(fileCode,"9 0 1\n",sym);
+                fprintf(fileCode,"4 0 %d\n", returnPos); //Store in stack
+                break;
+
+            case writesym:
+                fscanf(fileLexTable,"%d", &sym); // "2"
+                fscanf(fileLexTable,"%s", &varname); //variable
+                //Get position of var
+                returnPos = 0;
+                run = 1;
+                while(run != 0){
+                    run = strcmp(varname,vars[returnPos].name);
+                    returnPos++;
+                }
+                returnPos+=2;
+                fprintf(fileCode,"3 0 %d\n", returnPos); //put into stack
+                fprintf(fileCode,"9 0 0\n",sym);
+                break;
+
+            case ifsym: //!!CANNOT DEAL WITH "odd" OR <> !!
+                fscanf(fileLexTable,"%d", &sym); // "???"
+                while(sym != lessym && sym != gtrsym && sym != eqlsym && sym != leqsym && sym != geqsym){// < OR > OR = OR <= OR >=
+                    fscanf(fileLexTable,"%d", &sym);
+                    if(sym == numbersym){ //If it's a number
+                        numFound(returnPos, vars, 0);
+                    }
+                    else if (sym == 2) // If it's a var
+                        varFound(returnPos, vars, 0);
+                } //Should now be on the comparison sym
+
+                switch(sym){//switch based on comparison needed
+                    case lessym:
+                        //
+                        break;
+
+                    case gtrsym:
+                        //
+                        break;
+
+                    case eqlsym:
+                        //
+                        break;
+
+                    case leqsym:
+                        //
+                        break;
+
+                    case geqsym:
+                        //
+                        break;
+                }
 
                 fscanf(fileLexTable,"%d", &sym); // "???"
-
-                if(sym == numbersym)
-                    numFound(returnPos, vars, 0);
-                else if (sym == 2)
-                    varFound(returnPos, vars, 0);
+                while(sym != thensym){// "then"
+                    fscanf(fileLexTable,"%d", &sym);
+                    if(sym == numbersym){ //If it's a number
+                        numFound(returnPos, vars, 0);
+                    }
+                    else if (sym == 2) // If it's a var
+                        varFound(returnPos, vars, 0);
+                } //Should now be on the next line
+                break;
         }
     }
     //5) halt/end.
@@ -264,13 +351,16 @@ void generateMCode(){
 }
 
 void numFound(int returnPos, varArray vars[], int returnF){
-    int sym;
+    int sym = 0;
     fscanf(fileLexTable,"%d", &sym);//"##"
-    fprintf(fileCode,"1 0 %d\n",sym);
-    if(!returnF){
-        fprintf(fileCode,"4 0 %d\n", 3+returnPos); //Store in stack
+    printf("numFound. into: %d\n", sym);
+    fprintf(fileCode,"1 0 %d\n",sym); //push number to stack
+    if(returnF != 1){//If you want to add number to sum
+        printf("  numfound return.\n");
+        fprintf(fileCode,"4 0 %d\n", returnPos); //Store in stack
         fscanf(fileLexTable,"%d", &sym);//"##"
-        if(sym == 2 || sym == numbersym)
+        printf("Testing %d.\n", sym);
+        if(sym == identsym || sym == numbersym)
             printError(20);
         else if(sym == semicolonsym)
             return;
@@ -280,43 +370,103 @@ void numFound(int returnPos, varArray vars[], int returnF){
 }
 
 void varFound(int returnPos, varArray vars[], int returnF){
-    int temPos = 0, run;
-    char varname[999];
+    int temPos = 0, run = 1, sym = 0;
+    printf("varFound.\n");
+    char varname[identMax];
     fscanf(fileLexTable,"%s", &varname);
-    run = strcmp(varname,vars[temPos++].name);
+    //printf("  looking for %s.\n", varname);
     while(run != 0){
-        run = strcmp(varname,vars[temPos++].name);
+        run = strcmp(varname,vars[temPos].name);
+        temPos++;
     }
-    temPos--;
-    fprintf(fileCode,"3 0 %d\n", 3+temPos);//Add to stack
-    if(!returnF)
-        fprintf(fileCode,"4 0 %d\n", 3+returnPos); //Store in stack
+    temPos+=2;
+    printf("  %s at pos %d.\n", varname, temPos);
+    fprintf(fileCode,"3 0 %d\n", temPos);//Add to stack
+    if(!returnF){
+        printf("  varfound return.\n");
+        fprintf(fileCode,"4 0 %d\n", returnPos); //Store in stack
+        fscanf(fileLexTable,"%d", &sym);//"##"
+        if(sym == identsym || sym == numbersym)
+            printError(20);
+        else if(sym == semicolonsym)
+            return;
+        else
+            operationFound(sym, returnPos, vars);
+    }
 
 }
 
 void operationFound(int sym, int returnPos, varArray vars[]){
-    char varname[999];
-    switch(sym){
-        case minussym:
-            fprintf(fileCode,"3 0 %d\n", 3+returnPos);//Add to stack
-            fscanf(fileLexTable,"%d", &sym);//var OR num
-            if(sym == 2)
-                varFound(returnPos,vars,1);
-            else if(sym == numbersym)
-                numFound(returnPos,vars,1);
-            fprintf(fileCode,"2 0 3\n");
-            fprintf(fileCode,"4 0 %d\n", 3+returnPos);
-            break;
+    char varname[identMax];
+    int runalready = 0;
+    //printf("opFound. Into: %d w return %d.\n", sym, returnPos);
+    while(sym != semicolonsym){
+        switch(sym){
+            case minussym:
+                if(!runalready)
+                    fprintf(fileCode,"3 0 %d\n", returnPos);//Add to stack
+                fscanf(fileLexTable,"%d", &sym);//var OR num
+                //printf("grabbed - [%d] ???.\n", sym);
+                if(sym == 2){
+                    varFound(returnPos,vars,1);
+                }
+                else if(sym == numbersym){
+                    numFound(returnPos,vars,1);
+                }
+                fprintf(fileCode,"2 0 3\n");
+                fscanf(fileLexTable,"%d", &sym);
+                runalready = 1;
+                break;
 
-        case plussym:
-            fprintf(fileCode,"3 0 %d\n", 3+returnPos);//Add to stack
-            fscanf(fileLexTable,"%d", &sym);//var OR num
-            if(sym == 2)
-                varFound(returnPos,vars,1);
-            else if(sym == numbersym)
-                numFound(returnPos,vars,1);
-            fprintf(fileCode,"2 0 2\n");
-            fprintf(fileCode,"4 0 %d\n", 3+returnPos);
-            break;
+            case plussym:
+                if(!runalready)
+                    fprintf(fileCode,"3 0 %d\n", returnPos);//Add to stack
+                fscanf(fileLexTable,"%d", &sym);//var OR num
+                //printf("grabbed - [%d] ???.\n", sym);
+                if(sym == 2){
+                    varFound(returnPos,vars,1);
+                }
+                else if(sym == numbersym){
+                    numFound(returnPos,vars,1);
+                }
+                fprintf(fileCode,"2 0 2\n");
+                fscanf(fileLexTable,"%d", &sym);
+                runalready = 1;
+                break;
+
+            case multsym:
+                if(!runalready)
+                    fprintf(fileCode,"3 0 %d\n", returnPos);//Add to stack
+                fscanf(fileLexTable,"%d", &sym);//var OR num
+                //printf("grabbed - [%d] ???.\n", sym);
+                if(sym == 2){
+                    varFound(returnPos,vars,1);
+                }
+                else if(sym == numbersym){
+                    numFound(returnPos,vars,1);
+                }
+                fprintf(fileCode,"2 0 4\n");
+                fscanf(fileLexTable,"%d", &sym);
+                runalready = 1;
+                break;
+
+            case slashsym:
+                if(!runalready)
+                    fprintf(fileCode,"3 0 %d\n", returnPos);//Add to stack
+                fscanf(fileLexTable,"%d", &sym);//var OR num
+                //printf("grabbed - [%d] ???.\n", sym);
+                if(sym == 2){
+                    varFound(returnPos,vars,1);
+                }
+                else if(sym == numbersym){
+                    numFound(returnPos,vars,1);
+                }
+                fprintf(fileCode,"2 0 5\n");
+                fscanf(fileLexTable,"%d", &sym);
+                runalready = 1;
+                break;
+        }
     }
+    fprintf(fileCode,"4 0 %d\n", returnPos);
+    readAlready = 0;
 }

@@ -1,7 +1,10 @@
-var x, y;
-const z = 5;
+var x, w;
 begin
-  y := 3;
-  x := 4 - 3;
-  y := 6 - 1;
+  x := 4;
+  read w;
+  /* if w > x then */
+	w := w + 1;
+  /*else*/
+    w := x;
+  write w;
 end.

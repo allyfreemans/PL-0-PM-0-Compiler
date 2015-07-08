@@ -37,12 +37,13 @@ int codeSize = 0;
 //Functions
 void loadFile();
 void writeCode();
-void runCode(int flag);
+void runCode(int flag, int flag2);
 void fetch_cycle();
-void execute_cycle();
+void execute_cycle(int flag);
 void operate();
 int base(int level, int b);
 void printStack();
+void printToScreen(int flag);
 
 void vm(int flag){
     stack[1] = 0;
@@ -59,9 +60,12 @@ void vm(int flag){
     if(fileTrace == NULL)
         printError(ERROR_INVALID_FILE);
 
-    writeCode(flag);
+    writeCode(0);
 
-    runCode(flag);
+    runCode(0, flag);
+
+    fclose(fileTrace);
+    fclose(fileCode);
 }
 
 void loadFile(){
@@ -94,7 +98,7 @@ void writeCode(int flag) {
 	fprintf(fileTrace,"                   pc  bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
 }
 
-void runCode(int flag){
+void runCode(int flag, int flag2){
     while (BP > 0){
         if (PC < codeSize){
             if(flag)
@@ -102,7 +106,7 @@ void runCode(int flag){
             fprintf(fileTrace,"%4d  %s  %d  %2d ", PC, OPCODE_STRINGS[code[PC].OP], code[PC].L, code[PC].M);
 
             fetch_cycle();
-            execute_cycle();
+            execute_cycle(flag2);
 
             if(flag)
                 printf("  %2d   %d  %2d  ", PC, BP, SP);
@@ -112,8 +116,11 @@ void runCode(int flag){
                 printf("\n");
             fprintf(fileTrace,"\n");
         }
-        else
-            exit(-99);
+        else{
+            printToScreen(flag2);
+            exit(99);
+
+        }
     }
 }
 
@@ -122,7 +129,8 @@ void fetch_cycle(){
 	PC++;
 }
 
-void execute_cycle(){
+void execute_cycle(int flag){
+    int value = 0;
 	switch (IR.OP) {
 		case FCH:	//Fetch, not really used here
 			break;
@@ -163,21 +171,27 @@ void execute_cycle(){
 			break;
 		case SIO:	//perform standard IO op, depending on the instruction register
 			if(IR.M == 0){
-                printf(" %d ", stack[SP]);
+                printf("Write to screen: %d\n", stack[SP]);
                 SP--;
 			}
             else if(IR.M == 1){
-                //read(stack[sp]); //nothing for now
+                printf("\nEnter value: ");
+                scanf("%d", &value);
+                printf("\n");
                 SP++;
+                stack[SP] = value;
             }
             else if(IR.M == 2){
+                fclose(fileTrace);
+                printToScreen(flag);
                 printError(HALT);
+                exit(32);
             }
 			break;
 		case 10:
 		    break;	//nothing for now
 		default:
-			exit(-99);
+			exit(-98);
     }
 }
 
@@ -339,9 +353,36 @@ void printError(int n){
             break;
         case 32:
             printf("\nHalt has occurred.\n");
-            break;
+            return;
         default:
             printf("\nAn error has occurred: .\n");
         }
     exit(n);
+}
+
+void printToScreen(int flag){
+    char scanned[99], c;
+    int run = 1;
+    fileTrace = fopen(nameTrace, "r");
+    //printf("\nwelcome.\n");
+    if(flag){
+        run = strcmp("pc",scanned);
+        while(run != 0){
+            //printf("%s ", scanned);
+            fscanf(fileTrace,"%s",scanned);
+            run = strcmp("pc",scanned);
+        }
+        printf("\n");
+        //system("pause");
+        fscanf(fileTrace,"%s",scanned); //"bp"
+        fscanf(fileTrace,"%s",scanned); // "sp"
+        fscanf(fileTrace,"%s",scanned); // "stack"
+        printf("                   pc  bp  sp  stack");
+        while(c != EOF){
+            c = fgetc(fileTrace);
+            printf("%c", c);
+        }
+        printf("\n");
+    }
+    fclose(fileTrace);
 }
