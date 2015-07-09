@@ -26,6 +26,9 @@ void handleRead(varArray vars[]);
 void handleWrite(varArray vars[]);
 int findReturnPos(char varname[], varArray vars[]);
 void handleParenthesis(varArray vars[]);
+void handleIf(varArray vars[]);
+void handleWhile(varArray vars[]);
+void handleOdd(varArray vars[]);
 
 void parser(int flag){
 
@@ -258,11 +261,11 @@ void generateMCode(){
                 break;
 
             case ifsym:
-                //
+                handleIf(vars);
                 break;
 
             case whilesym:
-                //
+                handleWhile(vars);
                 break;
         }
     }
@@ -271,6 +274,53 @@ void generateMCode(){
     lines++;
 
     fclose(fileCode);
+}
+
+void handleIf(varArray vars[]){
+    fscanf(fileLexTable,"%d", &sym); // ???
+    //!!STOPPED WORK HERE
+
+
+
+}
+
+void handleWhile(varArray vars[]){}
+
+void handleOdd(varArray vars[]){
+    int sym, temp = -1;
+
+    while(sym != thensym){
+        fscanf(fileLexTable,"%d", &sym);//find next sym
+        switch(sym){
+
+            case numbersym:
+                handleNumber();
+                if(temp != -1)
+                    handleOperation(temp);
+                break;
+
+            case identsym:
+                handleIdent(vars);
+                if(temp != -1)
+                    handleOperation(temp);
+                break;
+
+            case plussym:
+            case minussym:
+            case slashsym:
+            case multsym:
+                temp = sym;
+                break;
+
+            case lparentsym:
+                handleParenthesis(vars);
+                if(temp != -1)
+                    handleOperation(temp);
+                break;
+        }
+    }
+    fprintf(fileCode,"2 0 6\n"); //Odd test 0 if false, 1 if true
+    lines++;
 }
 
 void handleBecomeSym(varArray vars[]){
@@ -365,6 +415,38 @@ void handleOperation(int sym){
 
         case slashsym:
         fprintf(fileCode,"2 0 5\n");
+        lines++;
+        break;
+
+        case eqlsym:
+        fprintf(fileCode,"2 0 6\n");
+        lines++;
+        break;
+
+        //! XX != XX not handled ???
+
+        case neqsym:
+        fprintf(fileCode,"2 0 8\n");
+        lines++;
+        break;
+
+        case lessym:
+        fprintf(fileCode,"2 0 9\n");
+        lines++;
+        break;
+
+        case leqsym:
+        fprintf(fileCode,"2 0 10\n");
+        lines++;
+        break;
+
+        case gtrsym:
+        fprintf(fileCode,"2 0 11\n");
+        lines++;
+        break;
+
+        case geqsym:
+        fprintf(fileCode,"2 0 12\n");
         lines++;
         break;
     }

@@ -13,12 +13,14 @@ Work Log:
 		  generates symbol table
 		  tests for undeclared vars
 		  handles ident := XXX;
+		  handles XXX <= (etc.) XXX test
 		  handles read var;
 		  handles write var;
+		  handles unlimited parenthesis (recursive)
+		  handles odd XXX (for while do and if then else)
 			  
 	needed:   handles if then else
 		  handles while do
-		  handles odd XXX (for while do and if then else)
 		  handles begin ... end (for while do and if then else)
 
 
