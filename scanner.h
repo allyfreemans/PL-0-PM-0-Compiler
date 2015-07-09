@@ -542,7 +542,8 @@ lexTable *factor(lexTable *current){ // "factor"
             return(current);
     if((current->tokenType == identsym) || (current->tokenType == numbersym)){
         current = current->next;   /* "ident" OR "number" */ }
-    else if(current->tokenType == lparentsym){ // OR "("
+    else if(current->tokenType == lparentsym){// OR "("
+        current = current->next;
         current = expression(current); // "expression"
         if(current->tokenType != rparentsym) // ")"
             printError(ERROR_MISSING_RPARENT);
