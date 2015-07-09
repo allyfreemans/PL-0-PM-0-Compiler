@@ -52,6 +52,7 @@
 # define ERROR_INVALID_SYM 30
 # define OUT_OF_MEMORY 31
 # define HALT 32
+# define ERROR_INVALID_ELSE 33
 
 #ifndef GLB
 #define GLB

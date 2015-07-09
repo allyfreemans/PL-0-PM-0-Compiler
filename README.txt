@@ -10,18 +10,19 @@ Work Log:
  - parser.h   :: wip
  
 	progress: handles const
-		  generates symbol table
-		  tests for undeclared vars
-		  handles ident := XXX;
-		  handles XXX <= (etc.) XXX test
-		  handles read var;
-		  handles write var;
-		  handles unlimited parenthesis (recursive)
-		  handles odd XXX (for while do and if then else)
+		      generates symbol table
+		      tests for undeclared vars
+		      handles ident := XXX;
+		      handles XXX <= (etc.) XXX test
+		      handles read var;
+		      handles write var;
+		      handles unlimited parenthesis (recursive)
+		      handles odd XXX (for while do and if then else)
+		      fixed reading ANY number 2 as identsym
 			  
 	needed:   handles if then else
-		  handles while do
-		  handles begin ... end (for while do and if then else)
+			  handles while do
+			  handles begin ... end (for while do and if then else)
 
 
  - vm.h       :: done

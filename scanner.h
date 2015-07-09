@@ -15,6 +15,7 @@ typedef struct lexemeTable{
     char *lexeme;
     token tokenType;
     struct lexemeTable *next;
+    struct lexemeTable *prev;
 } lexTable;
 
 //Files
@@ -25,6 +26,7 @@ FILE *fileLexTableList;
 FILE *hashCode;
 
 int beginFlag = 0;
+int ifFlag = 0, ifbeginFlag = 0, ifLevel = 0;
 
 //Functions
 lexTable *removeComments(int rflag);
@@ -460,8 +462,8 @@ lexTable *statement(lexTable *current){ // "statement"
                 if(current->tokenType == elsesym){
                     current = statement(current);
                 }
-                else if(current->tokenType != endsym) // "end"
-                    printError(10);
+                if(current->tokenType != endsym) // "end"
+                    printError(19);
                 if(current->tokenType == endsym){
                     beginFlag--;
                     current = current->next;
@@ -473,11 +475,19 @@ lexTable *statement(lexTable *current){ // "statement"
                 current = condition(current); // "Condition"
                 if(current->tokenType != thensym) // "then"
                     printError(ERROR_THEN_EXPECTED);
+                ifFlag++;
+                ifLevel = beginFlag;
                 current = current->next;
                 current = statement(current); // "statement"
                 break;
 
             case elsesym: // "else"
+                //Test for VALID else, ie. a if then exists
+                if(!ifFlag)
+                    printError(33);
+                ifFlag--;
+                if(ifLevel != beginFlag)
+                    printError(33);
                 current = current->next;
                 current = statement(current); // "statement"
                 break;
@@ -629,6 +639,7 @@ void printList(lexTable *lexs, int flag){
 
 lexTable *newLexeme(lexTable *lexs, char *lexeme, token t){
     lexTable *current = lexs;
+    lexTable *prev = NULL;
 
     if(!lexs){
         lexs = (lexTable *)malloc(sizeof(lexTable));
@@ -645,11 +656,13 @@ lexTable *newLexeme(lexTable *lexs, char *lexeme, token t){
             current->next = NULL;
             return lexs;
         }
+        prev = current;
         current = current->next;
     }
     current->lexeme = (char *)malloc(strlen(lexeme) +1);
     strcpy(current->lexeme, lexeme);
     current->tokenType = t;
     current->next = NULL;
+    current->prev = prev;
     return lexs;
 }

@@ -134,10 +134,15 @@ void createSym(){
             if(sym == 17)
                 commaFlag = 1;
         }
+        else if (sym == numbersym){
+            fscanf(fileLexTable,"%d", &sym); //value of num
+            printf("grabbed number %d.\n", sym);
+        }
         else if(sym == 2){
             fscanf(fileLexTable,"%s",name);
             c = fgetc(fileLexTable);
             position = hashMe(name); //Test to see if declared earlier
+            printf("%d declared earlier? %s:\n", sym, name);
             if((thisTable[position].level > L) || (thisTable[position].name[0] == NULL)){
                 printError(11);
             }
@@ -277,6 +282,7 @@ void generateMCode(){
 }
 
 void handleIf(varArray vars[]){
+    int sym;
     fscanf(fileLexTable,"%d", &sym); // ???
     //!!STOPPED WORK HERE
 
