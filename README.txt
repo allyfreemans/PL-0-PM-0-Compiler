@@ -15,10 +15,8 @@ Work Log:
 		  handles := XXX;
 		  handles read var;
 		  handles write var;
-		  handles if then else
 			  
-	needed:   handles if odd XXX then
-		  handles while do
+	needed:   handles if then else
 			  
  - vm.h       :: done
  
