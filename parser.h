@@ -241,7 +241,7 @@ void generateMCode(){
             }
         }
     //3) initialize program with 6 0 # found above
-    fprintf(fileCode,"6 0 %d\n",4+j);
+    fprintf(fileCode,"6 0 %d\n",3+j);
     lines++;
     nStack = 4+j;
     //3a) add const values into stack!
@@ -251,7 +251,7 @@ void generateMCode(){
             hashy = hashMe(thisTable[i].name);
             fprintf(fileCode,"1 0 %d\n",thisTable[hashy].val);
             lines++;
-            fprintf(fileCode,"4 0 %d\n",4+j);
+            fprintf(fileCode,"4 0 %d\n",3+j);
             lines++;
             j++;
         }
@@ -788,6 +788,6 @@ int findReturnPos(char varname[], varArray vars[]){
     while(strcmp(vars[returnPos].name, varname) != 0){ // Run until you find pos
         returnPos++;
     }
-    returnPos+=4; //Plus 4(+1 from final pos++)
+    returnPos+=3; //Plus 4(+1 from final pos++)
     return returnPos;
 }
