@@ -19,6 +19,7 @@ int toggleBacklog = 0;
 int backlogPos = 0;
 int backlog[999][3];
 int read = 1;
+int operationCount = 0;
 
 //Functions
 void printSymTable();
@@ -294,7 +295,7 @@ void generateMCode(){
 
 void handleIf(varArray vars[]){
     int sym, temp = -1, currentLines = 0, currentBacklog = 0, currentBacklog2 = 0;
-    int op = 0, singleLine = 0, tempy = 0;
+    int op = 0, singleLine = 0, tempy = 0, counthere = 0;
     while(sym != eqlsym && sym != leqsym && sym != lessym && sym != geqsym && sym != gtrsym && sym != neqsym){ //while not comparison sym
         fscanf(fileLexTable,"%d", &sym);//find next sym
         printf("??? %d.\n", sym);
@@ -443,107 +444,9 @@ void handleIf(varArray vars[]){
     singleLine = 1;
     printf("%d else or ??? %d.\n", elsesym, sym);
     if(sym == elsesym){
-        currentBacklog2 = backlogPos;
-        //!SCAN BACKLOG
-        fscanf(fileLexTable,"%d", &sym);
-        if(sym == beginsym){ // "begin"
-            //do all REGULAR OPERATIONS.
-            while(sym != endsym){
-                if(read)
-                    fscanf(fileLexTable,"%d", &sym);
-                else
-                    read = 1;
-                switch(sym){
-
-                    case identsym: // var := ????
-                        handleBecomeSym(vars);
-                        break;
-
-                    case readsym:
-                        handleRead(vars);
-                        break;
-
-                    case writesym:
-                        handleWrite(vars);
-                        break;
-
-                    case ifsym:
-                        handleIf(vars);
-                        break;
-
-                    case whilesym:
-                        handleWhile(vars);
-                        break;
-                }
-            }
-            fscanf(fileLexTable,"%d", &sym);
-            printf("%d else or ??? %d.\n", elsesym, sym);
-        } // VVV should now be on ??? ORR "else" VVV
-        else{ //One line ONLY9
-            switch(sym){
-
-                    case identsym: // var := ????
-                        handleBecomeSym(vars);
-                        break;
-
-                    case readsym:
-                        handleRead(vars);
-                        break;
-
-                    case writesym:
-                        handleWrite(vars);
-                        break;
-
-                    case ifsym:
-                        handleIf(vars);
-                        break;
-
-                    case whilesym:
-                        handleWhile(vars);
-                        break;
-            }
-            fscanf(fileLexTable,"%d", &sym);
-            printf("%d else or ??? %d.\n", elsesym, sym);
-            // ^^^ should now be on ??? ORR "else" ^^^
-        }
-        printf("lines: %d.\n", lines);
-        //1) print jump to current line (beginning of else)
-        if(!(toggleBacklog-1))
-                fprintf(fileCode,"8 0 %d\n",lines+1);
-            else{
-                backlog[backlogPos][0] = 8;
-                backlog[backlogPos][1] = 0;
-                backlog[backlogPos++][2] = lines+1;
-            }
-        lines++;
-        printf("%d lines, printed cj to %d.\n",lines-1+2);
-        //2) scan the backlog of "else" & store first element of "else"
-        singleLine = 1;
-        //!
-        //3) print the backlog of "if", fake it out!
-        tempy = backlogPos;
-        backlogPos = currentBacklog2; //fake it out, fake max
-        printf("print from %d - %d.\n",currentBacklog, currentBacklog2);
-        printBacklog(currentBacklog);
-        backlogPos = tempy; //return the max.
-        //4) print jump to current line (end of else)
-        if(!(toggleBacklog-1))
-                fprintf(fileCode,"7 0 %d\n",lines+4);
-                //print conditional jump to (currentLines)+(backlogPos - currentBacklog)
-            else{
-                backlog[backlogPos][0] = 7;
-                backlog[backlogPos][1] = 0;
-                backlog[backlogPos++][2] = lines+4;
-            }
-        lines++;
-        printf("printed j to %d.\n",lines-1);
-        //5) print backlog of "else"
-        printf("print from %d - %d.\n",currentBacklog2, backlogPos);
-        printBacklog(currentBacklog2);
-        backlogPos = currentBacklog; //return backlog to normal
-        printf("%d. %d. current sym: %d.\n",writesym, semicolonsym, sym);
-        singleLine = 1;
-        toggleBacklog--;
+        //
+        //
+        //
     }
     else{
         printf("current lines %d. Jump to %d. (%d + (%d - %d))\n",lines,currentLines+(backlogPos-currentBacklog),currentLines,backlogPos,currentBacklog);
@@ -688,6 +591,7 @@ void handleParenthesis(varArray vars[]){
 }
 
 void handleOperation(int sym){
+    operationCount++;
     switch(sym){
         case plussym:
         if(!toggleBacklog)

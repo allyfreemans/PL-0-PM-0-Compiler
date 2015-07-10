@@ -3,11 +3,13 @@ const y = 5;
 begin
   read x;
   if x < y then
-	x := 7;
-  else
     begin
-    w := 6;
-	w := w - 1;
+	x := 7;
+	x := x + 1 + (2 * 2);
+	x := x + 1 + (2 * 2);
+	x := x + 1 + (2 * 2);
+	x := x + 1 + (2 * 2);
+	x := x + 1 + (2 * 2);
 	end;
   write x;
   write w;

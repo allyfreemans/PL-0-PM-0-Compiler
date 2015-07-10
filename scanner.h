@@ -385,9 +385,7 @@ void analyzeCode(lexTable *front, int flag){
             case identsym:
             case beginsym:
             case ifsym:
-            case whilesym:
-            case readsym:
-            case writesym: // "statement"
+            case whilesym:// "statement"
                 if((current->tokenType == readsym) || (current->tokenType == writesym))
                     rwflag = 1;
                 if(current->tokenType == beginsym)
@@ -417,6 +415,18 @@ void analyzeCode(lexTable *front, int flag){
                 break;
 
             case endsym:
+                current = current->next;
+                break;
+
+            case callsym:
+            case readsym:
+            case writesym:
+                current = current->next;
+                if(current->tokenType != identsym)
+                        printError(-99);
+                current = current->next; //Should be on name
+                if(current->tokenType != semicolonsym)
+                        printError(-99);
                 current = current->next;
                 break;
 
