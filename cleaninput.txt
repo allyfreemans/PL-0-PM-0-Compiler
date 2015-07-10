@@ -1,16 +1,14 @@
 var x, w;
 const y = 5;
 begin
-  x := 4;
-  read w;
+  read x;
   if x < y then
-  begin
-    x := x + 1;
-	x := x + 2;
-  end;
+	x := 7;
   else
-  begin
-    x := x + 3;
-  end;
+    begin
+    w := 6;
+	w := w - 1;
+	end;
+  write x;
   write w;
 end.

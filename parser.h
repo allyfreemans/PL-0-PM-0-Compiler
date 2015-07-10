@@ -5,15 +5,22 @@ FILE *fileCode;
 FILE *fileLexTable;
 FILE *readFile;
 
+//Struct
 typedef struct variable{
     char name[identMax];
     int type;
 } varArray;
 
+//Global variables
 symTable thisTable[MAX_SYMBOL_TABLE_SIZE];
 int nStack = 4;
 int lines = 0;
+int toggleBacklog = 0;
+int backlogPos = 0;
+int backlog[999][3];
+int read = 1;
 
+//Functions
 void printSymTable();
 void printMCode();
 void createSym();
@@ -29,7 +36,9 @@ void handleParenthesis(varArray vars[]);
 void handleIf(varArray vars[]);
 void handleWhile(varArray vars[]);
 void handleOdd(varArray vars[]);
+void printBacklog(int beginValue);
 
+//Main function
 void parser(int flag){
 
     createSym();
@@ -248,9 +257,11 @@ void generateMCode(){
     }
     //4) go through main lines as such
     while(sym != periodsym){
-
-        fscanf(fileLexTable,"%d", &sym);
-
+        if(read)
+            fscanf(fileLexTable,"%d", &sym);
+        else
+            read = 1;
+        printf("main loop. sym: %d. if: %d.\n", sym, ifsym);
         switch(sym){
 
             case identsym: // var := ????
@@ -282,33 +293,27 @@ void generateMCode(){
 }
 
 void handleIf(varArray vars[]){
-    int sym;
-    fscanf(fileLexTable,"%d", &sym); // ???
-    //!!STOPPED WORK HERE
-
-
-
-}
-
-void handleWhile(varArray vars[]){}
-
-void handleOdd(varArray vars[]){
-    int sym, temp = -1;
-
-    while(sym != thensym){
+    int sym, temp = -1, currentLines = 0, currentBacklog = 0, currentBacklog2 = 0;
+    int op = 0, singleLine = 0, tempy = 0;
+    while(sym != eqlsym && sym != leqsym && sym != lessym && sym != geqsym && sym != gtrsym && sym != neqsym){ //while not comparison sym
         fscanf(fileLexTable,"%d", &sym);//find next sym
+        printf("??? %d.\n", sym);
         switch(sym){
 
             case numbersym:
                 handleNumber();
-                if(temp != -1)
+                if(temp != -1){
                     handleOperation(temp);
+                    temp = -1;
+                }
                 break;
 
             case identsym:
                 handleIdent(vars);
-                if(temp != -1)
+                if(temp != -1){
                     handleOperation(temp);
+                    temp = -1;
+                }
                 break;
 
             case plussym:
@@ -320,13 +325,287 @@ void handleOdd(varArray vars[]){
 
             case lparentsym:
                 handleParenthesis(vars);
-                if(temp != -1)
+                if(temp != -1){
                     handleOperation(temp);
+                    temp = -1;
+                }
                 break;
         }
     }
-    fprintf(fileCode,"2 0 6\n"); //Odd test 0 if false, 1 if true
-    lines++;
+    op = sym;
+    while(sym != thensym){ //while not "then"
+        fscanf(fileLexTable,"%d", &sym);//find next sym
+        printf("??? %d.\n", sym);
+        switch(sym){
+
+            case numbersym:
+                handleNumber();
+                if(temp != -1){
+                    handleOperation(temp);
+                    temp = -1;
+                }
+                break;
+
+            case identsym:
+                handleIdent(vars);
+                if(temp != -1){
+                    handleOperation(temp);
+                    temp = -1;
+                }
+                break;
+
+            case plussym:
+            case minussym:
+            case slashsym:
+            case multsym:
+                temp = sym;
+                break;
+
+            case lparentsym:
+                handleParenthesis(vars);
+                if(temp != -1){
+                    handleOperation(temp);
+                    temp = -1;
+                }
+                break;
+        }
+    }
+    handleOperation(op); //handle the comparison
+    fscanf(fileLexTable,"%d", &sym);//???
+    printf("??? %d.\n", sym);
+    currentLines = lines;
+    currentBacklog = backlogPos;
+    toggleBacklog++;//store in backlog.
+    if(sym == beginsym){ // "begin"
+        //do all REGULAR OPERATIONS.
+        while(sym != endsym){
+            if(read)
+                fscanf(fileLexTable,"%d", &sym);
+            else
+                read = 1;
+            switch(sym){
+
+                case identsym: // var := ????
+                    handleBecomeSym(vars);
+                    break;
+
+                case readsym:
+                    handleRead(vars);
+                    break;
+
+                case writesym:
+                    handleWrite(vars);
+                    break;
+
+                case ifsym:
+                    handleIf(vars);
+                    break;
+
+                case whilesym:
+                    handleWhile(vars);
+                    break;
+            }
+        }
+        fscanf(fileLexTable,"%d", &sym);
+        printf("%d else or ??? %d.\n", elsesym, sym);
+    } // VVV should now be on ??? ORR "else" VVV
+    else{ //One line ONLY
+        switch(sym){
+
+                case identsym: // var := ????
+                    handleBecomeSym(vars);
+                    break;
+
+                case readsym:
+                    handleRead(vars);
+                    break;
+
+                case writesym:
+                    handleWrite(vars);
+                    break;
+
+                case ifsym:
+                    handleIf(vars);
+                    break;
+
+                case whilesym:
+                    handleWhile(vars);
+                    break;
+        }
+        fscanf(fileLexTable,"%d", &sym);
+        printf("%d else or ??? %d.\n", elsesym, sym);
+        // ^^^ should now be on ??? ORR "else" ^^^
+    }
+    //Now test for "else"
+    if(sym == semicolonsym){
+        fscanf(fileLexTable,"%d", &sym);
+    }
+    singleLine = 1;
+    printf("%d else or ??? %d.\n", elsesym, sym);
+    if(sym == elsesym){
+        currentBacklog2 = backlogPos;
+        //!SCAN BACKLOG
+        fscanf(fileLexTable,"%d", &sym);
+        if(sym == beginsym){ // "begin"
+            //do all REGULAR OPERATIONS.
+            while(sym != endsym){
+                if(read)
+                    fscanf(fileLexTable,"%d", &sym);
+                else
+                    read = 1;
+                switch(sym){
+
+                    case identsym: // var := ????
+                        handleBecomeSym(vars);
+                        break;
+
+                    case readsym:
+                        handleRead(vars);
+                        break;
+
+                    case writesym:
+                        handleWrite(vars);
+                        break;
+
+                    case ifsym:
+                        handleIf(vars);
+                        break;
+
+                    case whilesym:
+                        handleWhile(vars);
+                        break;
+                }
+            }
+            fscanf(fileLexTable,"%d", &sym);
+            printf("%d else or ??? %d.\n", elsesym, sym);
+        } // VVV should now be on ??? ORR "else" VVV
+        else{ //One line ONLY9
+            switch(sym){
+
+                    case identsym: // var := ????
+                        handleBecomeSym(vars);
+                        break;
+
+                    case readsym:
+                        handleRead(vars);
+                        break;
+
+                    case writesym:
+                        handleWrite(vars);
+                        break;
+
+                    case ifsym:
+                        handleIf(vars);
+                        break;
+
+                    case whilesym:
+                        handleWhile(vars);
+                        break;
+            }
+            fscanf(fileLexTable,"%d", &sym);
+            printf("%d else or ??? %d.\n", elsesym, sym);
+            // ^^^ should now be on ??? ORR "else" ^^^
+        }
+        printf("lines: %d.\n", lines);
+        //1) print jump to current line (beginning of else)
+        if(!(toggleBacklog-1))
+                fprintf(fileCode,"8 0 %d\n",lines+1);
+            else{
+                backlog[backlogPos][0] = 8;
+                backlog[backlogPos][1] = 0;
+                backlog[backlogPos++][2] = lines+1;
+            }
+        lines++;
+        printf("%d lines, printed cj to %d.\n",lines-1+2);
+        //2) scan the backlog of "else" & store first element of "else"
+        singleLine = 1;
+        //!
+        //3) print the backlog of "if", fake it out!
+        tempy = backlogPos;
+        backlogPos = currentBacklog2; //fake it out, fake max
+        printf("print from %d - %d.\n",currentBacklog, currentBacklog2);
+        printBacklog(currentBacklog);
+        backlogPos = tempy; //return the max.
+        //4) print jump to current line (end of else)
+        if(!(toggleBacklog-1))
+                fprintf(fileCode,"7 0 %d\n",lines+4);
+                //print conditional jump to (currentLines)+(backlogPos - currentBacklog)
+            else{
+                backlog[backlogPos][0] = 7;
+                backlog[backlogPos][1] = 0;
+                backlog[backlogPos++][2] = lines+4;
+            }
+        lines++;
+        printf("printed j to %d.\n",lines-1);
+        //5) print backlog of "else"
+        printf("print from %d - %d.\n",currentBacklog2, backlogPos);
+        printBacklog(currentBacklog2);
+        backlogPos = currentBacklog; //return backlog to normal
+        printf("%d. %d. current sym: %d.\n",writesym, semicolonsym, sym);
+        singleLine = 1;
+        toggleBacklog--;
+    }
+    else{
+        printf("current lines %d. Jump to %d. (%d + (%d - %d))\n",lines,currentLines+(backlogPos-currentBacklog),currentLines,backlogPos,currentBacklog);
+        if(!(toggleBacklog-1))
+            fprintf(fileCode,"8 0 %d\n",4+currentLines+(backlogPos-currentBacklog));
+            //print conditional jump to (currentLines)+(backlogPos - currentBacklog)
+        else{
+            backlog[backlogPos][0] = 8;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 4+currentLines+(backlogPos-currentBacklog);
+        }
+        lines++;
+        singleLine = 1;
+        printBacklog(currentBacklog);//print if's backlog
+        toggleBacklog--;
+    }
+    if(singleLine){ //Test according to main ops
+        read = 0;
+        if(read)
+            fscanf(fileLexTable,"%d", &sym);
+        else
+            read = 1;
+        printf("main loop. sym: %d. if: %d.\n", sym, ifsym);
+        switch(sym){
+
+            case identsym: // var := ????
+                handleBecomeSym(vars);
+                break;
+
+            case readsym:
+                handleRead(vars);
+                break;
+
+            case writesym:
+                handleWrite(vars);
+                break;
+
+            case ifsym:
+                handleIf(vars);
+                break;
+
+            case whilesym:
+                handleWhile(vars);
+                break;
+        }
+    }
+}
+
+void printBacklog(int beginValue){
+    int i, j;
+    j = backlogPos;
+    for(i = beginValue; i < j; i++){
+        fprintf(fileCode,"%d %d %d\n", backlog[i][0],backlog[i][1],backlog[i][2]);
+        backlogPos--;
+    }
+}
+
+void handleWhile(varArray vars[]){}
+
+void handleOdd(varArray vars[]){
+
+
 }
 
 void handleBecomeSym(varArray vars[]){
@@ -365,7 +644,13 @@ void handleBecomeSym(varArray vars[]){
                 break;
         }
     }
-    fprintf(fileCode,"4 0 %d\n", returnPos);
+    if(!toggleBacklog)
+        fprintf(fileCode,"4 0 %d\n", returnPos);
+    else{
+        backlog[backlogPos][0] = 4;
+        backlog[backlogPos][1] = 0;
+        backlog[backlogPos++][2] = returnPos;
+    }
     lines++;
 }
 
@@ -405,54 +690,114 @@ void handleParenthesis(varArray vars[]){
 void handleOperation(int sym){
     switch(sym){
         case plussym:
-        fprintf(fileCode,"2 0 2\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 2\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 2;
+        }
         lines++;
         break;
 
         case minussym:
-        fprintf(fileCode,"2 0 3\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 3\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 3;
+        }
         lines++;
         break;
 
         case multsym:
-        fprintf(fileCode,"2 0 4\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 4\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 4;
+        }
         lines++;
         break;
 
         case slashsym:
-        fprintf(fileCode,"2 0 5\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 5\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 5;
+        }
         lines++;
         break;
 
         case eqlsym:
-        fprintf(fileCode,"2 0 6\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 8\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 8;
+        }
         lines++;
         break;
 
-        //! XX != XX not handled ???
+        //! XX % XX not handled ???
 
         case neqsym:
-        fprintf(fileCode,"2 0 8\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 9\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 9;
+        }
         lines++;
         break;
 
         case lessym:
-        fprintf(fileCode,"2 0 9\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 10\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 10;
+        }
         lines++;
         break;
 
         case leqsym:
-        fprintf(fileCode,"2 0 10\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 11\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 11;
+        }
         lines++;
         break;
 
         case gtrsym:
-        fprintf(fileCode,"2 0 11\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 12\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 12;
+        }
         lines++;
         break;
 
         case geqsym:
-        fprintf(fileCode,"2 0 12\n");
+        if(!toggleBacklog)
+            fprintf(fileCode,"2 0 13\n");
+        else{
+            backlog[backlogPos][0] = 2;
+            backlog[backlogPos][1] = 0;
+            backlog[backlogPos++][2] = 13;
+        }
         lines++;
         break;
     }
@@ -463,14 +808,26 @@ void handleIdent(varArray vars[]){
     char varname[identMax];
     fscanf(fileLexTable,"%s", varname); // varname
     position = findReturnPos(varname,vars); // get return address
-    fprintf(fileCode,"3 0 %d\n", position); //add variable to stack
+    if(!toggleBacklog)
+        fprintf(fileCode,"3 0 %d\n", position); //add variable to stack
+    else{
+        backlog[backlogPos][0] = 3;
+        backlog[backlogPos][1] = 0;
+        backlog[backlogPos++][2] = position;
+    }
     lines++;
 }
 
 void handleNumber(){
     int sym;
     fscanf(fileLexTable,"%d", &sym); // "##"
-    fprintf(fileCode,"1 0 %d\n", sym);//add number to stack
+    if(!toggleBacklog)
+        fprintf(fileCode,"1 0 %d\n", sym);//add number to stack
+    else{
+        backlog[backlogPos][0] = 1;
+        backlog[backlogPos][1] = 0;
+        backlog[backlogPos++][2] = sym;
+    }
     lines++;
 }
 
@@ -480,9 +837,21 @@ void handleRead(varArray vars[]){
     fscanf(fileLexTable,"%d", &sym); // "2"
     fscanf(fileLexTable,"%s", varname); //variable
     returnPos = findReturnPos(varname,vars); // get return address
-    fprintf(fileCode,"9 0 1\n"); //Read from screen
+    if(!toggleBacklog)
+        fprintf(fileCode,"9 0 1\n"); //Read from screen
+    else{
+        backlog[backlogPos][0] = 9;
+        backlog[backlogPos][1] = 0;
+        backlog[backlogPos++][2] = 1;
+    }
     lines++;
-    fprintf(fileCode,"4 0 %d\n", returnPos); //Store in stack
+    if(!toggleBacklog)
+        fprintf(fileCode,"4 0 %d\n", returnPos); //Store in stack
+    else{
+        backlog[backlogPos][0] = 4;
+        backlog[backlogPos][1] = 0;
+        backlog[backlogPos++][2] = returnPos;
+    }
     lines++;
 }
 
@@ -492,9 +861,21 @@ void handleWrite(varArray vars[]){
     fscanf(fileLexTable,"%d", &sym); // "2"
     fscanf(fileLexTable,"%s", varname); //variable
     returnPos = findReturnPos(varname,vars); // get return address
-    fprintf(fileCode,"3 0 %d\n", returnPos); //put into stack
+    if(!toggleBacklog)
+        fprintf(fileCode,"3 0 %d\n", returnPos); //put into stack
+    else{
+        backlog[backlogPos][0] = 3;
+        backlog[backlogPos][1] = 0;
+        backlog[backlogPos++][2] = returnPos;
+    }
     lines++;
-    fprintf(fileCode,"9 0 0\n"); //Write to screen
+    if(!toggleBacklog)
+        fprintf(fileCode,"9 0 0\n"); //Write to screen
+    else{
+        backlog[backlogPos][0] = 9;
+        backlog[backlogPos][1] = 0;
+        backlog[backlogPos++][2] = 0;
+    }
     lines++;
 }
 

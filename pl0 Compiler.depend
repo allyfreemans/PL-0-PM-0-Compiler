@@ -15,13 +15,13 @@
 	<string.h>
 	<time.h>
 
-1436478233 c:\users\creedtora\downloads\pl0 compiler\parser.h
+1436495444 c:\users\creedtora\downloads\pl0 compiler\parser.h
 	"header.h"
 
 1436404677 c:\users\creedtora\downloads\pl0 compiler\vm.h
 	"header.h"
 
-1436478036 source:c:\users\creedtora\downloads\pl0 compiler\compiler.c
+1436478315 source:c:\users\creedtora\downloads\pl0 compiler\compiler.c
 	<stdio.h>
 	"scanner.h"
 	"parser.h"
