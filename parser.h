@@ -17,6 +17,7 @@ int lexLevel = 0; //lexiLevel
 int collumn = 0;
 int row = 1;
 int counted = 0;
+int numProcedures = 0;
 
 void getToken();
 void block();
@@ -35,6 +36,7 @@ void condition();
 void toFile();
 void analyze();
 void emptySyms(int l);
+void printMCode();
 
 //Run the main section
 void parser(int flag){
@@ -44,8 +46,26 @@ void parser(int flag){
         printError(ERROR_INVALID_FILE);
 
     analyze();
-    printf("\nNo errors, program is syntactically correct.\n");
+    printf("\nNo errors, program is syntactically correct.\n\n");
     toFile();
+    fclose(fileMCode);
+    printMCode(flag);
+}
+
+void printMCode(int flag){
+    char c;
+    fileMCode = fopen(nameMCode,"r");
+    if(fileMCode == NULL)
+        printError(ERROR_INVALID_FILE);
+    if(flag){
+        printf("Generated Machine Code:\n");
+        c = fgetc(fileMCode);
+        while(c != EOF){
+            printf("%c",c);
+            c = fgetc(fileMCode);
+        }
+        printf("\n\n");
+    }
     fclose(fileMCode);
 }
 
@@ -54,9 +74,11 @@ void fetchToken(){
     currentToken = tokenList[tokenTablePos];
     tokenTablePos++;
     if(currentToken.type == newlinesym){
-        row++;
-        collumn = 0;
-        fetchToken();
+        while(currentToken.type == newlinesym){
+            row++;
+            collumn = 0;
+            fetchToken();
+        }
     }
     else
         collumn++;
@@ -87,9 +109,6 @@ void block(){
     if(currentToken.type == varsym)
         varFound();
     counted++;
-    }
-    for(i=0; i < symTablePos; i++){
-        printf("Kind: %d. Name: %s. Value: %d. Level: %d. Ad: %d.\n",symbolTable[i].kind,symbolTable[i].name,symbolTable[i].val,symbolTable[i].level,symbolTable[i].addr);
     }
 
     temPos = currentM; //Store current MCode pos
@@ -176,15 +195,22 @@ void varFound(){
 
 //deal with procedure declarations
 void procedureFound(){
+    numProcedures++;
     fetchToken();
     if(currentToken.type != identsym){
         printf("\nL:%d,C:%d :: ",row,collumn);
         printError(34); //const/int/proc must have ident after
     }
 
-    pushSymTable(3, currentToken, lexLevel, currentM, -1);
+    if(numProcedures == 1){
+        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
+    }
+    else
+        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
+
 
     lexLevel++;
+    numProcedures++;
 
     fetchToken();
     if(currentToken.type != semicolonsym){
@@ -269,12 +295,6 @@ void statement(){
         fetchToken();
         statement();
 
-        if(lexLevel != 0){
-            printf("on symbol %d. ", currentToken.type);
-            //fetchToken();
-            printf("; next symbol %d. ", currentToken.type);
-        }
-
         while(currentToken.type == semicolonsym){
             fetchToken();
             statement();
@@ -303,14 +323,31 @@ void statement(){
 
         pushCode(8,0,0);
 
+        if(lexLevel>0){
+            printf("1current sym: %d, %s.\n",currentToken.type, currentToken.name);
+        }
+
         statement();
         MCode[tempBPos].M = MCodePos;
 
         fetchToken();
-        if(lexLevel != 0 && currentToken.type != elsesym){
+        if(lexLevel>0){
+            printf("2current sym: %d, %s.\n",currentToken.type, currentToken.name);
+        }
+        if(lexLevel > 0 && currentToken.type != elsesym){
             tokenTablePos--;
-            currentToken = tokenList[tokenTablePos];
+            tokenTablePos--;
+            currentToken.type = tokenList[tokenTablePos].type;
+            strcpy(currentToken.name,tokenList[tokenTablePos].name);
+            while(currentToken.type == newlinesym){
+                tokenTablePos--;
+                currentToken.type = tokenList[tokenTablePos].type;
+                strcpy(currentToken.name,tokenList[tokenTablePos].name);
+            }
             collumn--;
+        }
+        if(lexLevel>0){
+            printf("3current sym: %d, %s.\n",currentToken.type, currentToken.name);
         }
         if(currentToken.type == elsesym){
             MCode[tempBPos].M = MCodePos+1;
