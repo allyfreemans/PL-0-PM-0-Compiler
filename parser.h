@@ -16,6 +16,7 @@ int currentM = 0; //currentMAddress
 int lexLevel = 0; //lexiLevel
 int collumn = 0;
 int row = 1;
+int counted = 0;
 
 void getToken();
 void block();
@@ -26,7 +27,7 @@ int  toInt(char *num);
 void varFound();
 void procedureFound();
 void statement();
-int  searchSym(char *name);
+int  searchSym(char *name, int level);
 void expression();
 void term();
 void factor();
@@ -66,12 +67,15 @@ void analyze(){
     fetchToken(); //Grab first token to test
     block(); // program: block "."
     if(currentToken.type != periodsym){ //"."
+        printf("\nL:%d,C:%d :: ",row,collumn);
         printError(ERROR_PERIOD_EXPECTED);
     }
 }
 
 //the bulkiness
 void block(){
+    int i;
+    counted = 0;
     int tempBlockPos = MCodePos, temPos;
     currentM = 0;
 
@@ -82,6 +86,10 @@ void block(){
         constFound();
     if(currentToken.type == varsym)
         varFound();
+    counted++;
+    }
+    for(i=0; i < symTablePos; i++){
+        printf("Kind: %d. Name: %s. Value: %d. Level: %d. Ad: %d.\n",symbolTable[i].kind,symbolTable[i].name,symbolTable[i].val,symbolTable[i].level,symbolTable[i].addr);
     }
 
     temPos = currentM; //Store current MCode pos
@@ -93,8 +101,9 @@ void block(){
 
     pushCode(6,0,temPos + 4);
     statement();
-    if(currentToken.type != periodsym)
+    if(currentToken.type != periodsym && currentToken.type == semicolonsym){
         pushCode(2,0,0); //return proc???
+    }
     else
         pushCode(9,0,2);
 }
@@ -172,9 +181,10 @@ void procedureFound(){
         printf("\nL:%d,C:%d :: ",row,collumn);
         printError(34); //const/int/proc must have ident after
     }
-    lexLevel++;
 
     pushSymTable(3, currentToken, lexLevel, currentM, -1);
+
+    lexLevel++;
 
     fetchToken();
     if(currentToken.type != semicolonsym){
@@ -198,7 +208,7 @@ void statement(){
     int symPos, identPos, tempBPos, temPos, temPos2;
 
     if(currentToken.type == identsym){
-        symPos = searchSym(currentToken.name);
+        symPos = searchSym(currentToken.name, lexLevel);
         //printf("%s at pos: %d.\n",currentToken.name,symPos);
 
         if(symPos == -1){
@@ -238,7 +248,7 @@ void statement(){
     else if(currentToken.type == callsym){
         fetchToken();
 
-        symPos = searchSym(currentToken.name);
+        symPos = searchSym(currentToken.name, lexLevel);
 
         if(symPos == -1){
             printf("\nL:%d,C:%d :: ",row,collumn);
@@ -258,6 +268,12 @@ void statement(){
     else if(currentToken.type == beginsym){
         fetchToken();
         statement();
+
+        if(lexLevel != 0){
+            printf("on symbol %d. ", currentToken.type);
+            //fetchToken();
+            printf("; next symbol %d. ", currentToken.type);
+        }
 
         while(currentToken.type == semicolonsym){
             fetchToken();
@@ -291,6 +307,11 @@ void statement(){
         MCode[tempBPos].M = MCodePos;
 
         fetchToken();
+        if(lexLevel != 0 && currentToken.type != elsesym){
+            tokenTablePos--;
+            currentToken = tokenList[tokenTablePos];
+            collumn--;
+        }
         if(currentToken.type == elsesym){
             MCode[tempBPos].M = MCodePos+1;
 
@@ -329,7 +350,7 @@ void statement(){
         fetchToken();
 
         if(currentToken.type == identsym){
-            symPos = searchSym(currentToken.name);
+            symPos = searchSym(currentToken.name, lexLevel);
             if(symPos == -1){
                 printf("\nL:%d,C:%d :: ",row,collumn);
                 printf("Identifier '%s': ", currentToken.name);
@@ -346,7 +367,7 @@ void statement(){
         fetchToken();
 
         if(currentToken.type == identsym){
-            symPos = searchSym(currentToken.name);
+            symPos = searchSym(currentToken.name, lexLevel);
             if(symPos == -1){
                 printf("\nL:%d,C:%d :: ",row,collumn);
                 printf("Identifier '%s': ", currentToken.name);
@@ -409,7 +430,7 @@ void factor(){
     int symPos;
 
     if(currentToken.type == identsym){
-        symPos = searchSym(currentToken.name);
+        symPos = searchSym(currentToken.name, lexLevel);
 
         if(symPos == -1){
             printf("\nL:%d,C:%d :: ",row,collumn);
@@ -495,12 +516,15 @@ void condition(){
 }
 
 //find a variable in the symbol table
-int searchSym(char *name){
+int searchSym(char *name, int level){
     int i;
-    //printf("search from %d >= %d.\n", symTablePos-1, 0);
-    for(i=symTablePos-1; i >= 0; i--){
-        if(strcmp(name,symbolTable[i].name) == 0 && symbolTable[i].addr != -1)
-            return i;
+    //check for locals first, then behind one, until level = 0
+    while(level != -1){
+        for(i=symTablePos-1; i >= 0; i--){
+            if(strcmp(name,symbolTable[i].name) == 0 && symbolTable[i].addr != -1 && symbolTable[i].level == level)
+                return i;
+        }
+        level--;
     }
     return -1; //not found :(
 }

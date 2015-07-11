@@ -24,7 +24,7 @@ void printTable();
 void printList(int flag);
 
 
-Token *scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
+void *scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
 
     fileCode = fopen(nameCode,"r");
     if(fileCode == NULL)

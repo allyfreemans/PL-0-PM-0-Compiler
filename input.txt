@@ -1,16 +1,11 @@
-var x,w;
-const y = 9;
+var w,x;
+const y = 7;
 
 procedure mappy;
-var u;
+var x, u, z; /* test recognizing local x and w */
+/* var w;  remove comments to test all locals  */
 begin
-	u := 3;
-	x := 88;
-end;
-
-begin
-	x := 4;
-	read w;
+	read u;
 	
 	/* if/then/else testing */
 	if odd w then
@@ -36,15 +31,18 @@ begin
 		x := x - 1;
 		x := x + 2;
 	end;
-	x := 1;
+	z := 1;
 	while x < 9 do x := x + 1;
 	/* end while/do testing */
-	
-	/* procedure testing */
+	write u;
+	write z;
+end;
+
+begin
+	x := 4;
+
 	call mappy;
-	/* end procedure testing */
-	
-	write w; 
+ 
 	write x;
 	
 end.
