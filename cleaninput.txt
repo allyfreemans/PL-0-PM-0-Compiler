@@ -1,8 +1,56 @@
-var x, y;
-const z = 5;
-begin
-y := 3;
+var x, w, o;
+var e;
+const y = 6, z = 9, r = 3;
+const f = 1;
 
-x := y + 56;
-y := z + z;
+procedure mappy;
+var u, g;
+begin
+	u := 3;
+	x := 88;
+	x := x + 1;
+	x := x - 1;
+	x := 99;
+end;
+
+begin
+	x := 4;
+	read w;
+	
+	
+	if odd w then
+		begin
+			w := w + 1;
+			w := w + 1;
+		end;
+	else
+		begin
+			x := y - 1;
+			
+			w := 9 + (1 - 3)*(2+(2+(2+1)));
+		end;
+	if x > y then w := w + 1;
+	else w := w - 1;
+	
+	
+	
+	x := 1;
+	while x < 9 do
+	begin
+		x := x + 1;
+		x := x - 1;
+		x := x + 2;
+	end;
+	x := 1;
+	while x < 9 do x := x + 1;
+	
+	
+	
+	
+	
+	
+	
+	write w; 
+	write x;
+	
 end.

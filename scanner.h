@@ -10,52 +10,35 @@ typedef enum{
 	readsym, elsesym, errsym
 } token;
 
-//Lex table
-typedef struct lexemeTable{
-    char *lexeme;
-    token tokenType;
-    struct lexemeTable *next;
-} lexTable;
-
 //Files
 FILE *fileCode;
 FILE *fileCleanCode;
 FILE *fileLexTable;
 FILE *fileLexTableList;
-FILE *hashCode;
 
-int beginFlag = 0;
+int tokenPos = 0;
 
 //Functions
-lexTable *removeComments(int rflag);
-void printLexeme(lexTable *lexs, int flag);
-void printTable(lexTable *lexs);
-void printList(lexTable *lexs, int flag);
-void analyzeCode(lexTable *current, int flag);
-lexTable *newLexeme(lexTable *lexs, char *lexeme, token t);
-lexTable *statement(lexTable *current);
-lexTable *expression(lexTable *current);
-lexTable *factor(lexTable *current);
-lexTable *term(lexTable *current);
-lexTable *condition(lexTable *current);
+void removeComments();
+void printLexeme(int flag);
+void printTable();
+void printList(int flag);
 
-void scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
+
+Token *scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
 
     fileCode = fopen(nameCode,"r");
     if(fileCode == NULL)
         printError(ERROR_INVALID_FILE);
 
-    lexTable *start = NULL;
-
-    start = removeComments(flag);
-    printLexeme(start, flag);
+    removeComments();
+    printLexeme(flag);
     //printf("closing\n");
     fclose(fileCode);
 }
 
-lexTable *removeComments(int rflag){
+void removeComments(){
 
-    lexTable *front = NULL;
     char numHolder[numMax];
     char varHolder[identMax];
     int numLines = 0;
@@ -91,16 +74,19 @@ lexTable *removeComments(int rflag){
             else if(((int)scanner == 10) || ((int)scanner == 59)){ //is newline or ';'
                 fprintf(fileCleanCode,"%c", scanner);
 
-                if(scanner == 59)
-                    front = newLexeme(front,";", semicolonsym);
+                if(scanner == 59){
+                    strcpy(tokenList[tokenPos].name, ";");
+                    tokenList[tokenPos++].type = semicolonsym;
+                }
 
                 numLines++;
-                //analyzeCode(front);
                 scanner = fgetc(fileCode);
                 while(((int)scanner == 10) || ((int)scanner == 59) || ((int)scanner == 32) || ((int)scanner == 9) || ((int)scanner == 3)){
                     fprintf(fileCleanCode,"%c",scanner);
-                    if(scanner == 59)
-                        front = newLexeme(front,";", semicolonsym);
+                    if(scanner == 59){
+                        strcpy(tokenList[tokenPos].name, ";");
+                        tokenList[tokenPos++].type = semicolonsym;
+                    }
                     scanner = fgetc(fileCode);
                 }
             }
@@ -108,17 +94,20 @@ lexTable *removeComments(int rflag){
             else if (((int)scanner >= 58 && (int)scanner <= 62) || ((int)scanner >= 40 && (int)scanner <= 47)) { //CASE: is a symbol
                 switch(scanner){
                     case '+' :
-                        front = newLexeme(front,"+", plussym);
+                        strcpy(tokenList[tokenPos].name, "+");
+                        tokenList[tokenPos++].type = plussym;
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
                     case '-' :
-                        front = newLexeme(front,"-", minussym);
+                        strcpy(tokenList[tokenPos].name, "-");
+                        tokenList[tokenPos++].type = minussym;
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
                     case '*' :
-                        front = newLexeme(front,"*",multsym);
+                        strcpy(tokenList[tokenPos].name, "*");
+                        tokenList[tokenPos++].type = multsym;
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
@@ -128,68 +117,80 @@ lexTable *removeComments(int rflag){
                         if(scanner == '*')
                             flag = 1;
                         else{
-                            front = newLexeme(front,"/", slashsym);
+                            strcpy(tokenList[tokenPos].name, "/");
+                            tokenList[tokenPos++].type = slashsym;
                             fprintf(fileCleanCode,"/");
                         }
                         break;
                     case '=' :
-                        front = newLexeme(front,"=", eqlsym);
+                        strcpy(tokenList[tokenPos].name, "=");
+                        tokenList[tokenPos++].type = eqlsym;
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
                     case ',' :
-                        front = newLexeme(front,",", commasym);
+                        strcpy(tokenList[tokenPos].name, ",");
+                        tokenList[tokenPos++].type = commasym;
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
                     case '.' :
-                        front = newLexeme(front,".", periodsym);
+                        strcpy(tokenList[tokenPos].name, ".");
+                        tokenList[tokenPos++].type = periodsym;
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
                     case '>' :
                         scanner = fgetc(fileCode);
                         if (scanner == '='){ //matches '>='
-                            front = newLexeme(front,">=", geqsym);
+                            strcpy(tokenList[tokenPos].name, ">=");
+                            tokenList[tokenPos++].type = geqsym;
                             fprintf(fileCleanCode,">=");
                             scanner = fgetc(fileCode);
                         }
                         else{
-                            front = newLexeme(front,">", gtrsym);
+                            strcpy(tokenList[tokenPos].name, ">");
+                            tokenList[tokenPos++].type = gtrsym;
                             fprintf(fileCleanCode,">");
                         }
                         break;
                     case '(' :
-                        front = newLexeme(front,"(", lparentsym);
+                        strcpy(tokenList[tokenPos].name, "(");
+                        tokenList[tokenPos++].type = lparentsym;
                         fprintf(fileCleanCode,"(");
                         scanner = fgetc(fileCode);
                         break;
                     case ')' :
-                        front = newLexeme(front,")", rparentsym);
+                        strcpy(tokenList[tokenPos].name, ")");
+                        tokenList[tokenPos++].type = rparentsym;
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
                     case '<' :
                         scanner = fgetc(fileCode);
                         if (scanner == '='){ //matches '<='
-                            front = newLexeme(front,"<=", leqsym);
+                            strcpy(tokenList[tokenPos].name, "<=");
+                            tokenList[tokenPos++].type = leqsym;
                             fprintf(fileCleanCode,"<=");
                             scanner = fgetc(fileCode);
                         }
                         else if (scanner == '>'){ //matches <>
-                            front = newLexeme(front,"<>", neqsym);
+                            strcpy(tokenList[tokenPos].name, "<>");
+                            tokenList[tokenPos++].type = neqsym;
                             fprintf(fileCleanCode,"<>");
                             scanner = fgetc(fileCode);
                         }
                         else{
-                            front = newLexeme(front,"<", lessym);
+                            strcpy(tokenList[tokenPos].name, "<");
+                            tokenList[tokenPos++].type = lessym;
                             fprintf(fileCleanCode,"<");
                         }
                         break;
                     case ':' :
                         scanner = fgetc(fileCode);
                         if (scanner == '='){ //matches ':='
-                            front = newLexeme(front,":=", becomessym);
+                            strcpy(tokenList[tokenPos].name, ":=");
+                            tokenList[tokenPos++].type = becomessym;
                             fprintf(fileCleanCode,":=");
                             scanner = fgetc(fileCode);
                         }
@@ -220,8 +221,8 @@ lexTable *removeComments(int rflag){
                         numHolder[count++] = scanner;
                 }
                 numHolder[count] = '\0';
-
-                front = newLexeme(front, numHolder, numbersym);
+                strcpy(tokenList[tokenPos].name,numHolder);
+                tokenList[tokenPos++].type = numbersym;
                 fprintf(fileCleanCode,"%s", numHolder);
 
                 if(!ignore_flag)
@@ -252,49 +253,64 @@ lexTable *removeComments(int rflag){
                     varHolder[count-1] = '\0';
                 //figure out if you have a reserved name
                 if (strcmp(varHolder, "begin") == 0){
-                    front = newLexeme(front, "begin", beginsym);
+                    strcpy(tokenList[tokenPos].name, "begin");
+                    tokenList[tokenPos++].type = beginsym;
                 }
                 else if (strcmp(varHolder, "call") == 0){
-                    front = newLexeme(front, "call", callsym);
+                    strcpy(tokenList[tokenPos].name, "call");
+                    tokenList[tokenPos++].type = callsym;
                 }
                 else if (strcmp(varHolder, "const") == 0){
-                    front = newLexeme(front, "const", constsym);
+                    strcpy(tokenList[tokenPos].name, "const");
+                    tokenList[tokenPos++].type = constsym;
                 }
                 else if (strcmp(varHolder, "var") == 0){
-                    front = newLexeme(front, "var", varsym);
+                    strcpy(tokenList[tokenPos].name, "var");
+                    tokenList[tokenPos++].type = varsym;
                 }
                 else if (strcmp(varHolder, "do") == 0){
-                    front = newLexeme(front, "do", dosym);
+                    strcpy(tokenList[tokenPos].name, "do");
+                    tokenList[tokenPos++].type = dosym;
                 }
                 else if (strcmp(varHolder, "else") == 0){
-                    front = newLexeme(front, "else", elsesym);
+                    strcpy(tokenList[tokenPos].name, "else");
+                    tokenList[tokenPos++].type = elsesym;
                 }
                 else if (strcmp(varHolder, "end") == 0){
-                    front = newLexeme(front, "end", endsym);
+                    strcpy(tokenList[tokenPos].name, "end");
+                    tokenList[tokenPos++].type = endsym;
                 }
                 else if (strcmp(varHolder, "if") == 0){
-                    front = newLexeme(front, "if", ifsym);
+                    strcpy(tokenList[tokenPos].name, "if");
+                    tokenList[tokenPos++].type = ifsym;
                 }
                 else if (strcmp(varHolder, "write") == 0){
-                    front = newLexeme(front, "write", writesym);
+                    strcpy(tokenList[tokenPos].name, "write");
+                    tokenList[tokenPos++].type = writesym;
                 }
                 else if (strcmp(varHolder, "procedure") == 0){
-                    front = newLexeme(front, "procedure", procsym);
+                    strcpy(tokenList[tokenPos].name, "procedure");
+                    tokenList[tokenPos++].type = procsym;
                 }
                 else if (strcmp(varHolder, "then") == 0){
-                    front = newLexeme(front, "then", thensym);
+                    strcpy(tokenList[tokenPos].name, "then");
+                    tokenList[tokenPos++].type = thensym;
                 }
                 else if (strcmp(varHolder, "while") == 0){
-                    front = newLexeme(front, "while", whilesym);
+                    strcpy(tokenList[tokenPos].name, "while");
+                    tokenList[tokenPos++].type = whilesym;
                 }
                 else if (strcmp(varHolder, "read") == 0){
-                    front = newLexeme(front, "read", readsym);
+                    strcpy(tokenList[tokenPos].name, "read");
+                    tokenList[tokenPos++].type = readsym;
                 }
                 else if (strcmp(varHolder, "odd") == 0){
-                    front = newLexeme(front, "odd", oddsym);
+                    strcpy(tokenList[tokenPos].name, "odd");
+                    tokenList[tokenPos++].type = oddsym;
                 }
                 else{
-                    front = newLexeme(front, varHolder, identsym);
+                    strcpy(tokenList[tokenPos].name,varHolder);
+                    tokenList[tokenPos++].type = identsym;
                     }
                 fprintf(fileCleanCode,"%s", varHolder);
 
@@ -305,279 +321,15 @@ lexTable *removeComments(int rflag){
                 scanner = EOF;
         }
     }
-    analyzeCode(front, rflag);
     fclose(fileCleanCode);
-    return front;
 }
 
-void analyzeCode(lexTable *front, int flag){
-    lexTable *current = front;
-    int rwflag = 0;
-    int procFlag = 0;
-
-    //printf("got here.\n");
-
-    front = newLexeme(front, "err", errsym); //Padding! You need that last pos occupied with a dummy.
-
-    while(current->next){ //"block"
-        switch(current->tokenType){
-            case procsym: //"procedure"
-                procFlag++;
-                current = current->next;
-                if(current->tokenType != identsym) // "ident"
-                    printError(4);
-                current = current->next;
-                if(current->tokenType != semicolonsym) // ";"
-                    printError(5);
-                current = current->next;
-                break; //Now loop for "block"
-
-            case constsym: // "const-declaration"
-                current = current->next;
-                if(current->tokenType != identsym) // "ident"
-                    printError(4);
-                current = current->next;
-                if(current->tokenType != eqlsym) // "="
-                    printError(3);
-                current = current->next;
-                if(current->tokenType != numbersym) // "number"
-                    printError(2);
-                current = current->next;
-                while(current->tokenType == commasym){ // OPTIONAL ","
-                    current = current->next;
-                    if(current->tokenType != identsym) // "ident"
-                        printError(ERROR_MISSING_IDENT);
-                    current = current->next;
-                    if(current->tokenType == becomessym) // ERROR ":=" used
-                        printError(1);
-                    if(current->tokenType != eqlsym) // "="
-                        printError(3);
-                    current = current->next;
-                    if(current->tokenType != numbersym) // "number"
-                        printError(2);
-                    current = current->next;
-                }
-                if(current->tokenType != semicolonsym) // ";"
-                    printError(5);
-                current = current->next;
-                break;
-
-            case varsym: // "var-declaration"
-                current = current->next;
-                if(current->tokenType != identsym) // "ident"
-                    printError(4);
-                current = current->next;
-                if(current->tokenType == commasym){ // OPTIONAL ","
-                    while(current->tokenType == commasym){
-                        current = current->next;
-                        if(current->tokenType != identsym) // "ident"
-                            printError(ERROR_MISSING_IDENT);
-                        current = current->next;
-                    }
-                }
-                if(current->tokenType != semicolonsym) // ";"
-                    printError(5);
-                current = current->next;
-                break;
-
-            case identsym:
-            case beginsym:
-            case ifsym:
-            case whilesym:
-            case readsym:
-            case writesym: // "statement"
-                if((current->tokenType == readsym) || (current->tokenType == writesym))
-                    rwflag = 1;
-                if(current->tokenType == beginsym)
-                    beginFlag++;
-                current = statement(current);
-                if(rwflag){
-                    if(current->tokenType != semicolonsym) // ";"
-                        printError(5);
-                    current = current->next;
-                    rwflag = 0;
-                }
-                break;
-
-            case semicolonsym: //Assuming this is the end of a begin
-                if(beginFlag == 0)
-                    printError(5);
-                current = current->next;
-                procFlag--;
-                break;
-
-            case periodsym:
-                current->next = NULL;
-                break;
-
-            case elsesym:
-                current = statement(current);
-                break;
-
-            case endsym:
-                current = current->next;
-                break;
-
-            default:
-                printf("error with %s.", current->lexeme);
-                printError(-52);
-        }
-    }
-    //printf("ended branch.\n");
-    if(current->tokenType != periodsym) //end "."
-        printError(9);
-
-    current = front;
-    while(current->next != NULL){
-        current = current->next;
-    }
-    //printf("ended whole.\n");
-}
-lexTable *statement(lexTable *current){ // "statement"
-        if(!current->next || !current)
-            return(current);
-        switch(current->tokenType){
-            case identsym: // "ident"
-                current = current->next;
-                if(current->tokenType != becomessym) // ":="
-                    printError(ERROR_BECOMESSYM_EXPECTED);
-                current = current->next;
-                current = expression(current); //"expression"
-                break;
-
-            case beginsym: // "begin"
-                beginFlag++;
-                current = current->next;
-                current = statement(current); // "statement"
-                while(current->tokenType == semicolonsym){ // ";"
-                    if(!current->next)
-                        break;
-                    current = current->next;
-                    if(current->tokenType == endsym)
-                        break;
-                    current = statement(current); // "statement"
-                }
-                if(current->tokenType == elsesym){
-                    current = statement(current);
-                }
-                else if(current->tokenType != endsym) // "end"
-                    printError(10);
-                if(current->tokenType == endsym){
-                    beginFlag--;
-                    current = current->next;
-                }
-                break;
-
-            case ifsym: // "if"
-                current = current->next;
-                current = condition(current); // "Condition"
-                if(current->tokenType != thensym) // "then"
-                    printError(ERROR_THEN_EXPECTED);
-                current = current->next;
-                current = statement(current); // "statement"
-                break;
-
-            case elsesym: // "else"
-                current = current->next;
-                current = statement(current); // "statement"
-                break;
-
-            case whilesym: // "while"
-                current = current->next;
-                current = condition(current); // "Condition"
-                if(current->tokenType != dosym) // "do"
-                    printError(ERROR_DO_EXPECTED);
-                current = current->next;
-                current = statement(current); // "statement"
-                break;
-
-            case writesym: // "write" OR
-            case readsym: // "read"
-                current = current->next;
-                if(current->tokenType != identsym) // "ident"
-                    printError(-51);
-                current = current->next;
-                break;
-
-            case callsym: // "call" AFTER proc!
-                current = current->next;
-                if(current->tokenType != identsym) // "ident"
-                    printError(-51);
-                current = current->next;
-                break;
-
-            default:
-                printError(7);
-        }
-    return current;
-}
-
-
-lexTable *expression(lexTable *current){ // "expression"
-    if(!current->next)
-        return(current);
-    if(current->tokenType == plussym || current->tokenType == minussym)
-        current = current->next;   //OPTIONAL "+" or "-"
-    current = term(current); // "term"
-    while((current->tokenType == plussym) || (current->tokenType == minussym)){
-        current = current->next;   //OPTIONAL LOOP "+" or "-"
-        current = term(current); // "term"
-    }
-    return current;
-}
-
-lexTable *term(lexTable *current){ // "term"
-    if(!current->next)
-        return(current);
-    current = factor(current); // "factor"
-    while((current->tokenType == multsym)||(current->tokenType == slashsym)){ // OPTIONAL "*" OR "/"
-        current = current->next;
-        current = factor(current); // "factor"
-    }
-    return current;
-}
-
-lexTable *factor(lexTable *current){ // "factor"
-    if(!current->next)
-            return(current);
-    if((current->tokenType == identsym) || (current->tokenType == numbersym)){
-        current = current->next;   /* "ident" OR "number" */ }
-    else if(current->tokenType == lparentsym){ // OR "("
-        current = expression(current); // "expression"
-        if(current->tokenType != rparentsym) // ")"
-            printError(ERROR_MISSING_RPARENT);
-        current = current->next;
-    }
-    else
-        printError(-54);
-    return current;
-}
-
-lexTable *condition(lexTable *current){ // "condition"
-    if(!current->next)
-        return(current);
-    if(current->tokenType == oddsym){ // "odd"
-        current = current->next;
-        current = expression(current); // "expression"
-    }
-    else{ // ORR
-       current = expression(current); // "expression"
-       if(current->tokenType == becomessym)
-            printError(1);
-       if((current->tokenType != eqlsym) && (current->tokenType != neqsym) && (current->tokenType != gtrsym) && (current->tokenType != lessym) && (current->tokenType != leqsym) && (current->tokenType != geqsym))
-            printError(-50); // "rel-op"
-       current = current->next;
-       current = expression(current); // "expression"
-    }
-    return current;
-}
-
-void printLexeme(lexTable *lexs, int flag){
+void printLexeme(int flag){
     fileLexTable = fopen(nameLexTable,"w");
     if(fileLexTable == NULL)
         printError(OUT_OF_MEMORY);
 
-    printTable(lexs);
+    printTable();
 
     fclose(fileLexTable);
 
@@ -585,70 +337,34 @@ void printLexeme(lexTable *lexs, int flag){
     if(fileLexTableList == NULL)
         printError(OUT_OF_MEMORY);
 
-    printList(lexs, flag);
+    printList(flag);
 
     fclose(fileLexTableList);
 }
 
-void printTable(lexTable *lexs){
-    lexTable *current = lexs;
+void printTable(){
+    int i;
 
     fprintf(fileLexTable,"lexeme      token type\n");
-    while(current){
-        fprintf(fileLexTable,"%-11s %d\n", current->lexeme, current->tokenType);
-        current = current->next;
+    for(i=0; i<tokenPos; i++){
+        fprintf(fileLexTable,"%-11s %d\n", tokenList[i].name, tokenList[i].type);
     }
 }
 
-void printList(lexTable *lexs, int flag){
-    lexTable *current = lexs;
+void printList(int flag){
     int i;
     if(flag)
         printf("\nLexeme List:\n");
-    //printf("dummy for loop\n");
-    for(i=0; i<9999; i++){
-        if(current == NULL)
-            break;
-        if(flag == 1){
-            printf("%d ", current->tokenType);
-            if(current->tokenType == identsym || current->tokenType == numbersym){
-                printf("%s ", current->lexeme);
-            }
+    for(i=0; i<tokenPos; i++){
+        fprintf(fileLexTableList,"%d ", tokenList[i].type);
+        if(flag)
+            printf("%d ", tokenList[i].type);
+        if(tokenList[i].type == identsym || tokenList[i].type == numbersym){
+            fprintf(fileLexTableList,"%s ", tokenList[i].name);
+            if(flag)
+                printf("%s ", tokenList[i].name);
         }
-        fprintf(fileLexTableList,"%d ", current->tokenType);
-        if(current->tokenType == identsym || current->tokenType == numbersym){
-            fprintf(fileLexTableList,"%s ", current->lexeme);
-        }
-        current = current->next;
     }
     if(flag)
         printf("\n");
-}
-
-
-lexTable *newLexeme(lexTable *lexs, char *lexeme, token t){
-    lexTable *current = lexs;
-
-    if(!lexs){
-        lexs = (lexTable *)malloc(sizeof(lexTable));
-        if(!lexs)
-            printError(OUT_OF_MEMORY);
-        current = lexs;
-    }
-    else{
-        while(current->next){
-            current = current->next;
-        }
-        current->next = (lexTable *)malloc(sizeof(lexTable));
-        if (!current->next){
-            current->next = NULL;
-            return lexs;
-        }
-        current = current->next;
-    }
-    current->lexeme = (char *)malloc(strlen(lexeme) +1);
-    strcpy(current->lexeme, lexeme);
-    current->tokenType = t;
-    current->next = NULL;
-    return lexs;
 }
