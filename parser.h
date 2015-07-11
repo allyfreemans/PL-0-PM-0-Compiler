@@ -1,793 +1,488 @@
 #include "header.h"
 
 //Files
-FILE *fileCode;
-FILE *fileLexTable;
-FILE *readFile;
-
-//Struct
-typedef struct variable{
-    char name[identMax];
-    int type;
-} varArray;
+FILE *fileMCode;
 
 //Global variables
-symTable thisTable[MAX_SYMBOL_TABLE_SIZE];
-int nStack = 4;
-int lines = 0;
-int toggleBacklog = 0;
-int backlogPos = 0;
-int backlog[999][3];
-int read = 1;
-int operationCount = 0;
+symTable symbolTable[MAX_SYMBOL_TABLE_SIZE];
+Token currentToken;
+int symTablePos = 0;
+int tokenTablePos = 0;
 
-//Functions
-void printSymTable();
-void printMCode();
-void createSym();
-void generateMCode();
-void handleBecomeSym(varArray vars[]);
-void handleOperation(int sym);
-void handleIdent(varArray vars[]);
-void handleNumber();
-void handleRead(varArray vars[]);
-void handleWrite(varArray vars[]);
-int findReturnPos(char varname[], varArray vars[]);
-void handleParenthesis(varArray vars[]);
-void handleIf(varArray vars[]);
-void handleWhile(varArray vars[]);
-void handleOdd(varArray vars[]);
-void printBacklog(int beginValue);
+instruction MCode[MAX_CODE_LENGTH]; //MCodeTable
+int MCodePos = 0; //currentMCodeTableIndex
 
-//Main function
+int currentM = 0; //currentMAddress
+int lexLevel = 0; //lexiLevel
+
+void getToken();
+void block();
+void pushCode(int OP, int L, int M);
+void constFound();
+void pushSymTable(int kind, Token token, int L, int M, int num);
+int  toInt(char *num);
+void varFound();
+void procedureFound();
+void statement();
+int  searchSym(char *name);
+void expression();
+void term();
+void factor();
+void condition();
+void toFile();
+void analyze();
+void emptySyms(int l);
+
+//Run the main section
 void parser(int flag){
 
-    createSym();
-    printf("\nNo errors, program is syntactically correct!\n\n");
-
-    //printSymTable();
-
-    generateMCode();
-
-    if(flag)
-        printMCode();
-
-}
-
-void printSymTable(){
-    int i;
-    printf("\nSymbol Table:\n");
-    for(i=0; i<MAX_SYMBOL_TABLE_SIZE; i++){
-        printf("%d %s %d %d %d \n", thisTable[i].kind, thisTable[i].name, thisTable[i].val, thisTable[i].level, thisTable[i].addr);
-    }
-    printf("\n\n");
-}
-
-void printMCode(){
-    readFile = fopen(nameMCode,"r");
-    char c;
-    c = getc(readFile);
-    printf("Machine Code Generated:\n");
-    while(c != EOF){
-        printf("%c", c);
-        c = getc(readFile);
-    }
-}
-
-void createSym(){
-    int sym;//don't remove int i
-    int position = 0, L = 0, scanFlag = 0, commaFlag = 0, commaFlag2 = 0;
-    char name[identMax];
-    char c;
-
-    fileLexTable = fopen(nameLexTableList,"r");
-    if(fileLexTable == NULL)
+    fileMCode = fopen(nameMCode,"w");
+    if(fileMCode == NULL)
         printError(ERROR_INVALID_FILE);
 
-    //printf("\n\nwelcome to sym!\n");
-
-    c = 'a'; // set dummy to make sure default value isn't EOF
-    while (c != EOF){ //Create the symbol table
-        if(scanFlag != 1){
-            fscanf(fileLexTable,"%d", &sym);
-        }
-        else if(scanFlag == 1){
-            scanFlag = 0;
-        }
-        if(commaFlag == 1)
-            sym = 28;
-        if(commaFlag2 == 1)
-            sym = 29;
-        //printf("o[%d]\n", sym);
-        if(sym == 21) //begin
-            L++;
-        else if(sym == 22) //end
-            L--;
-        else if(sym == 29){//var
-                sym = 0;
-                if(commaFlag2 == 1)
-                    commaFlag2 = 0;
-                else{
-                    fscanf(fileLexTable,"%d", &sym); // get rid of dummy "2"
-                }
-                //printf("2='%d'\n", sym);
-                fscanf(fileLexTable,"%s",name);
-                //printf("'%s'\n", name);
-                position = hashMe(name);
-                    thisTable[position].kind = 2;
-                    thisTable[position].level = L;
-                    strcpy(thisTable[position].name,name);
-                fscanf(fileLexTable,"%d", &sym);
-                scanFlag = 1;
-                if(sym == commasym){
-                    fscanf(fileLexTable,"%d", &sym);
-                    commaFlag2 = 1;
-                }
-        }
-        else if(sym == 28){ //CONST If commas found, do it all again.
-            commaFlag = 0;
-            //printf("28[%d] = ", sym);
-            fscanf(fileLexTable,"%d", &sym); //ON PURPOSE, get rid of '2'
-            fscanf(fileLexTable,"%s",name); //varname
-            //printf("'%s' = ", name);
-            fscanf(fileLexTable,"%d", &sym); // "9"
-            fscanf(fileLexTable,"%d", &sym); // "3"
-            fscanf(fileLexTable,"%d", &sym); // "##"
-            //printf("%d\n", sym);
-            position = hashMe(name);
-            thisTable[position].kind = 1;
-            thisTable[position].level = L;
-            strcpy(thisTable[position].name,name);
-            thisTable[position].val = sym;
-            scanFlag = 1;
-            fscanf(fileLexTable,"%d", &sym); // "sym"
-            if(sym == 17)
-                commaFlag = 1;
-        }
-        else if (sym == numbersym){
-            fscanf(fileLexTable,"%d", &sym); //value of num
-            printf("grabbed number %d.\n", sym);
-        }
-        else if(sym == 2){
-            fscanf(fileLexTable,"%s",name);
-            c = fgetc(fileLexTable);
-            position = hashMe(name); //Test to see if declared earlier
-            printf("%d declared earlier? %s:\n", sym, name);
-            if((thisTable[position].level > L) || (thisTable[position].name[0] == NULL)){
-                printError(11);
-            }
-        }
-        else if(sym == procsym){
-            scanFlag = 0;
-            fscanf(fileLexTable,"%d", &sym); // "2"
-            fscanf(fileLexTable,"%s",name); //varname
-            position = hashMe(name);
-            thisTable[position].kind = 3;
-            thisTable[position].level = L;
-            strcpy(thisTable[position].name,name);
-            scanFlag = 1;
-            fscanf(fileLexTable,"%d", &sym);
-        }
-        else if(sym == periodsym){
-            c = EOF;
-        }
-        //printf("loop ");
-    }
-    //printf("completed.\n");
-    fclose(fileLexTable);
+    analyze();
+    printf("\nNo errors, program is syntactically correct.\n");
+    toFile();
+    fclose(fileMCode);
 }
 
-int hashMe(char name[]){ //The hash function will be (length *E(char * char's position in string)) % MAX_SIZE
-    int i, length=0, hashValue = 0;
-    length = strlen(name);
-    for(i=0; i<(length); i++){
-        hashValue += (int)name[i]*(i+1);
-        if(i%1 == 0)
-            hashValue *= 3;
-    }
-    hashValue *= length;
-    hashValue %= MAX_SYMBOL_TABLE_SIZE;
-    return hashValue;
+//Fetches the next token to use
+void fetchToken(){
+    currentToken = tokenList[tokenTablePos];
+    tokenTablePos++;
 }
 
-void generateMCode(){
-    int i, j = 0,numVar = 0, numConst = 0, hashy=0;
-    varArray vars[100];
-    int sym = 0, procFlag = 0, lines = 0;
-    char varname[identMax];
-    fileCode = fopen(nameMCode,"w");
-    if(fileCode == NULL)
-        printError(ERROR_INVALID_FILE);
-    fileLexTable = fopen(nameLexTableList,"r");
-
-    //1) find main procedure
-    fscanf(fileLexTable,"%d", &sym);
-    //printf("%d != %d, && %d > 0\n", sym, beginsym, procFlag);
-    while(sym != beginsym){
-        //printf("%d lines: Found [%d]\n",lines, sym);
-        if(sym == procsym)
-            procFlag ++;
-        else if(procsym > 0 && sym == endsym)
-            procFlag--;
-        else if((sym == beginsym) || (sym == semicolonsym))
-            lines++;
-        if(sym == 2){
-            fscanf(fileLexTable,"%s", varname);
-            //printf("%d lines: Found [%s]\n",lines, varname);
-            fscanf(fileLexTable,"%d", &sym);
-        }
-        else
-            fscanf(fileLexTable,"%d", &sym);
-        if((sym == beginsym) && (procFlag > 0)){
-            lines++;
-            //printf("%d lines: Found [%d]\n",lines, sym);
-            fscanf(fileLexTable,"%d", &sym);
-        }
+//Do the bulk of the things
+void analyze(){
+    fetchToken(); //Grab first token to test
+    block(); // program: block "."
+    if(currentToken.type != periodsym){ //"."
+        printError(ERROR_PERIOD_EXPECTED);
     }
-    //2) count number of const variables, log their pos into array
-        for(i=0; i<MAX_SYMBOL_TABLE_SIZE; i++){
-            if(thisTable[i].kind == 1){
-                strcpy(vars[j].name,thisTable[i].name);
-                vars[j++].type = 2;
-                numConst++;
-            }
-        }
-        //count regular vars
-        for(i=0; i<MAX_SYMBOL_TABLE_SIZE; i++){
-            if(thisTable[i].kind == 2){
-                strcpy(vars[j].name,thisTable[i].name);
-                vars[j++].type = 1;
-                numVar++;
-            }
-        }
-    //3) initialize program with 6 0 # found above
-    fprintf(fileCode,"6 0 %d\n",3+j);
-    lines++;
-    nStack = 4+j;
-    //3a) add const values into stack!
-    j = 0;
-    for(i=0; i<MAX_SYMBOL_TABLE_SIZE; i++){
-        if(thisTable[i].kind == 1){
-            hashy = hashMe(thisTable[i].name);
-            fprintf(fileCode,"1 0 %d\n",thisTable[hashy].val);
-            lines++;
-            fprintf(fileCode,"4 0 %d\n",3+j);
-            lines++;
-            j++;
-        }
-    }
-    //4) go through main lines as such
-    while(sym != periodsym){
-        if(read)
-            fscanf(fileLexTable,"%d", &sym);
-        else
-            read = 1;
-        printf("main loop. sym: %d. if: %d.\n", sym, ifsym);
-        switch(sym){
-
-            case identsym: // var := ????
-                handleBecomeSym(vars);
-                break;
-
-            case readsym:
-                handleRead(vars);
-                break;
-
-            case writesym:
-                handleWrite(vars);
-                break;
-
-            case ifsym:
-                handleIf(vars);
-                break;
-
-            case whilesym:
-                handleWhile(vars);
-                break;
-        }
-    }
-    //5) halt/end.
-    fprintf(fileCode,"9 0 2\n");
-    lines++;
-
-    fclose(fileCode);
 }
 
-void handleIf(varArray vars[]){
-    int sym, temp = -1, currentLines = 0, currentBacklog = 0, currentBacklog2 = 0;
-    int op = 0, singleLine = 0, tempy = 0, counthere = 0;
-    while(sym != eqlsym && sym != leqsym && sym != lessym && sym != geqsym && sym != gtrsym && sym != neqsym){ //while not comparison sym
-        fscanf(fileLexTable,"%d", &sym);//find next sym
-        printf("??? %d.\n", sym);
-        switch(sym){
+//the bulkiness
+void block(){
+    int tempBlockPos = MCodePos, temPos;
+    currentM = 0;
 
-            case numbersym:
-                handleNumber();
-                if(temp != -1){
-                    handleOperation(temp);
-                    temp = -1;
-                }
-                break;
+    pushCode(7,0,0); //Start.
 
-            case identsym:
-                handleIdent(vars);
-                if(temp != -1){
-                    handleOperation(temp);
-                    temp = -1;
-                }
-                break;
-
-            case plussym:
-            case minussym:
-            case slashsym:
-            case multsym:
-                temp = sym;
-                break;
-
-            case lparentsym:
-                handleParenthesis(vars);
-                if(temp != -1){
-                    handleOperation(temp);
-                    temp = -1;
-                }
-                break;
-        }
+    while(currentToken.type == constsym || currentToken.type == varsym){
+    if(currentToken.type == constsym)
+        constFound();
+    if(currentToken.type == varsym)
+        varFound();
     }
-    op = sym;
-    while(sym != thensym){ //while not "then"
-        fscanf(fileLexTable,"%d", &sym);//find next sym
-        printf("??? %d.\n", sym);
-        switch(sym){
 
-            case numbersym:
-                handleNumber();
-                if(temp != -1){
-                    handleOperation(temp);
-                    temp = -1;
-                }
-                break;
+    temPos = currentM; //Store current MCode pos
 
-            case identsym:
-                handleIdent(vars);
-                if(temp != -1){
-                    handleOperation(temp);
-                    temp = -1;
-                }
-                break;
+    while(currentToken.type == procsym)
+        procedureFound();
 
-            case plussym:
-            case minussym:
-            case slashsym:
-            case multsym:
-                temp = sym;
-                break;
+    MCode[tempBlockPos].M = MCodePos;
 
-            case lparentsym:
-                handleParenthesis(vars);
-                if(temp != -1){
-                    handleOperation(temp);
-                    temp = -1;
-                }
-                break;
-        }
-    }
-    handleOperation(op); //handle the comparison
-    fscanf(fileLexTable,"%d", &sym);//???
-    printf("??? %d.\n", sym);
-    currentLines = lines;
-    currentBacklog = backlogPos;
-    toggleBacklog++;//store in backlog.
-    if(sym == beginsym){ // "begin"
-        //do all REGULAR OPERATIONS.
-        while(sym != endsym){
-            if(read)
-                fscanf(fileLexTable,"%d", &sym);
+    pushCode(6,0,temPos + 4);
+    statement();
+    if(currentToken.type != periodsym)
+        pushCode(2,0,0); //return proc???
+    else
+        pushCode(9,0,2);
+}
+
+//push the code
+void pushCode(int OP, int L, int M){
+    MCode[MCodePos].OP = OP;
+    MCode[MCodePos].M = M;
+    MCode[MCodePos].L = L;
+    MCodePos++;
+}
+
+//deal with consts
+void constFound(){
+    Token tempT;
+    do{
+        fetchToken();
+        if(currentToken.type != identsym)
+            printError(34); //const/int/proc must have ident after
+
+        strcpy(tempT.name, currentToken.name); //copy into temp
+
+        fetchToken();
+        if(currentToken.type != eqlsym)
+            printError(3); //equals wanted after const declaration
+
+        fetchToken();
+        if(currentToken.type != numbersym)
+            printError(2); //number wanted after equals in const
+
+        pushSymTable(1, tempT, lexLevel, -5, toInt(currentToken.name));
+        fetchToken();
+    } while(currentToken.type == commasym);
+
+    if(currentToken.type != semicolonsym)
+        printError(19); //semicolon needed between statements
+
+    fetchToken();
+}
+
+//Deal with vars
+void varFound(){
+    int run = 1;
+    do{
+        fetchToken();
+        if(currentToken.type != identsym)
+            printError(34); //const/int/proc must have ident after
+
+        pushSymTable(2, currentToken, lexLevel, currentM+4, 0);
+        fetchToken();
+    } while(currentToken.type == commasym);
+
+    if(currentToken.type != semicolonsym)
+        printError(19); //semicolon needed between statements
+
+    fetchToken();
+}
+
+//deal with procedure declarations
+void procedureFound(){
+    fetchToken();
+    if(currentToken.type != identsym)
+        printError(34); //const/int/proc must have ident after
+
+    lexLevel++;
+
+    pushSymTable(3, currentToken, lexLevel, currentM, -1);
+
+    fetchToken();
+    if(currentToken.type != semicolonsym)
+        printError(19); //semicolon needed between statements
+
+    fetchToken();
+    block(); //run for the proc's insides
+    lexLevel--;
+
+    if(currentToken.type != semicolonsym)
+        printError(19); //semicolon needed between statements
+
+    fetchToken();
+}
+
+void statement(){
+    int symbolPos, identPos, tempBPos, temPos, temPos2;
+
+    if(currentToken.type == identsym){
+        symbolPos = searchSym(currentToken.name);
+        printf("%s at pos: %d.\n",currentToken.name,symbolPos);
+
+        if(symbolPos == -1)
+            printError(11); //undeclared variable found
+        else if(symbolTable[symbolPos].kind == 1)
+            printError(12); //assignment to const/proc not valid
+
+        identPos = symbolTable[symbolPos].addr;
+
+        fetchToken();
+        if(currentToken.type != becomessym){
+            if(currentToken.type == eqlsym)
+                printError(13); //use := not =
             else
-                read = 1;
-            switch(sym){
-
-                case identsym: // var := ????
-                    handleBecomeSym(vars);
-                    break;
-
-                case readsym:
-                    handleRead(vars);
-                    break;
-
-                case writesym:
-                    handleWrite(vars);
-                    break;
-
-                case ifsym:
-                    handleIf(vars);
-                    break;
-
-                case whilesym:
-                    handleWhile(vars);
-                    break;
-            }
+                printError(13); // := expected
         }
-        fscanf(fileLexTable,"%d", &sym);
-        printf("%d else or ??? %d.\n", elsesym, sym);
-    } // VVV should now be on ??? ORR "else" VVV
-    else{ //One line ONLY
-        switch(sym){
 
-                case identsym: // var := ????
-                    handleBecomeSym(vars);
-                    break;
+        fetchToken();
+        expression();
 
-                case readsym:
-                    handleRead(vars);
-                    break;
+        if(currentToken.type != semicolonsym)
+            printError(19); //semicolon needed between statements
 
-                case writesym:
-                    handleWrite(vars);
-                    break;
+        pushCode(4, lexLevel-symbolTable[symbolPos].level, identPos);
+    }
+    else if(currentToken.type == callsym){
+        fetchToken();
 
-                case ifsym:
-                    handleIf(vars);
-                    break;
+        symbolPos = searchSym(currentToken.name);
 
-                case whilesym:
-                    handleWhile(vars);
-                    break;
+        if(symbolPos == -1)
+            printError(11); //undeclared variable found
+        else if(symbolTable[symbolPos].kind == 1)
+            printError(12); //assignment to const/proc not valid
+
+        fetchToken();
+
+        pushCode(5, lexLevel, symbolTable[symbolPos].addr);
+
+    }
+    else if(currentToken.type == beginsym){
+        fetchToken();
+        statement();
+
+        while(currentToken.type == semicolonsym){
+            fetchToken();
+            statement();
         }
-        fscanf(fileLexTable,"%d", &sym);
-        printf("%d else or ??? %d.\n", elsesym, sym);
-        // ^^^ should now be on ??? ORR "else" ^^^
+        printf("on %d.\n", currentToken.type);
+        if(currentToken.type != endsym)
+            printError(17); //semicolon or } expected
+
+        fetchToken();
+        lexLevel++; //!?
+        emptySyms(lexLevel);
+        lexLevel--; //!?
     }
-    //Now test for "else"
-    if(sym == semicolonsym){
-        fscanf(fileLexTable,"%d", &sym);
-    }
-    singleLine = 1;
-    printf("%d else or ??? %d.\n", elsesym, sym);
-    if(sym == elsesym){
-        //
-        //
-        //
-    }
-    else{
-        printf("current lines %d. Jump to %d. (%d + (%d - %d))\n",lines,currentLines+(backlogPos-currentBacklog),currentLines,backlogPos,currentBacklog);
-        if(!(toggleBacklog-1))
-            fprintf(fileCode,"8 0 %d\n",4+currentLines+(backlogPos-currentBacklog));
-            //print conditional jump to (currentLines)+(backlogPos - currentBacklog)
-        else{
-            backlog[backlogPos][0] = 8;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 4+currentLines+(backlogPos-currentBacklog);
+    else if(currentToken.type == ifsym){
+        fetchToken();
+        condition();
+        if(currentToken.type != thensym)
+            printError(16); // then expected after if
+
+        fetchToken();
+        tempBPos = MCodePos;
+
+        pushCode(8,0,0);
+
+        statement();
+        MCode[tempBPos].M = MCodePos;
+
+        fetchToken();
+        if(currentToken.type == elsesym){
+            MCode[tempBPos].M = MCodePos+1;
+
+            tempBPos = MCodePos;
+
+            pushCode(7,0,0);
+
+            fetchToken();
+            statement();
+            MCode[tempBPos].M = MCodePos;
         }
-        lines++;
-        singleLine = 1;
-        printBacklog(currentBacklog);//print if's backlog
-        toggleBacklog--;
     }
-    if(singleLine){ //Test according to main ops
-        read = 0;
-        if(read)
-            fscanf(fileLexTable,"%d", &sym);
+    else if(currentToken.type == whilesym){
+        temPos = MCodePos;
+
+        fetchToken();
+        condition();
+
+        temPos2 = MCodePos;
+
+        pushCode(8,0,0);
+
+        if(currentToken.type != dosym)
+            printError(18); //do expected after while
+
+        fetchToken();
+        statement();
+
+        pushCode(7,0,temPos);
+
+        MCode[temPos2].M = MCodePos;
+    }
+    else if(currentToken.type == readsym){
+        fetchToken();
+
+        if(currentToken.type == identsym){
+            symbolPos = searchSym(currentToken.name);
+            if(symbolPos == -1)
+                printError(11); //undeclared variable found
+            fetchToken();
+
+            pushCode(9,0,1); //read from screen
+
+            pushCode(4,0,symbolTable[symbolPos].addr); //increment mcode
+        }
+    }
+    else if(currentToken.type == writesym){
+        fetchToken();
+
+        if(currentToken.type == identsym){
+            symbolPos = searchSym(currentToken.name);
+            if(symbolPos == -1)
+                printError(11); //undeclared variable found
+            fetchToken();
+
+            pushCode(3,0,symbolTable[symbolPos].addr); //read from screen
+
+            pushCode(9,0,0); //output statement
+        }
+    }
+}
+
+
+//expression work
+void expression(){
+    int thisOp;
+
+    if(currentToken.type == plussym || currentToken.type == minussym){
+        thisOp = currentToken.type;
+
+        if(thisOp == minussym)
+            pushCode(2,0,1);
+    }
+    term();
+
+    while(currentToken.type == plussym || currentToken.type == minussym){
+        thisOp = currentToken.type;
+        fetchToken();
+        term();
+
+        if(thisOp == plussym)
+            pushCode(2,0,2);
         else
-            read = 1;
-        printf("main loop. sym: %d. if: %d.\n", sym, ifsym);
-        switch(sym){
-
-            case identsym: // var := ????
-                handleBecomeSym(vars);
-                break;
-
-            case readsym:
-                handleRead(vars);
-                break;
-
-            case writesym:
-                handleWrite(vars);
-                break;
-
-            case ifsym:
-                handleIf(vars);
-                break;
-
-            case whilesym:
-                handleWhile(vars);
-                break;
-        }
+            pushCode(2,0,3);
     }
 }
 
-void printBacklog(int beginValue){
-    int i, j;
-    j = backlogPos;
-    for(i = beginValue; i < j; i++){
-        fprintf(fileCode,"%d %d %d\n", backlog[i][0],backlog[i][1],backlog[i][2]);
-        backlogPos--;
+//terms and things
+void term(){
+    int thisOp;
+
+    factor();
+
+    while(currentToken.type == multsym || currentToken.type == slashsym){
+        thisOp = currentToken.type;
+        fetchToken();
+        factor();
+
+        if(thisOp == multsym)
+            pushCode(2,0,4);
+        else
+            pushCode(2,0,5);
     }
 }
 
-void handleWhile(varArray vars[]){}
+//factors and fun
+void factor(){
+    int symPos;
 
-void handleOdd(varArray vars[]){
+    if(currentToken.type == identsym){
+        symPos = searchSym(currentToken.name);
 
+        if(symPos == -1)
+            printError(11); //undeclared var
 
+        if(symbolTable[symPos].kind == 1)
+            pushCode(1, 0, symbolTable[symPos].val);
+        else
+            pushCode(3, lexLevel-symbolTable[symPos].level, symbolTable[symPos].addr);
+
+        fetchToken();
+    }
+    else if(currentToken.type == numbersym){
+        pushCode(1, 0, toInt(currentToken.name));
+        fetchToken();
+    }
+    else if (currentToken.type == lparentsym){
+        fetchToken();
+        expression();
+
+        if(currentToken.type != rparentsym)
+            printError(22); //error: ) missing
+
+        fetchToken();
+    }
+    else
+        printError(23); //cannot begin with this symbol
 }
 
-void handleBecomeSym(varArray vars[]){
-    int sym, returnPos, temp = -1;
-    char varname[identMax];
-    fscanf(fileLexTable,"%s", &varname);//find varname
-    returnPos = findReturnPos(varname,vars); // get return address
-    //Now handle whatever lies inside, until semicolon
-    while(sym != semicolonsym){
-        fscanf(fileLexTable,"%d", &sym);//find next sym
-        switch(sym){
+void condition(){
+    int thisOp;
 
-            case numbersym:
-                handleNumber();
-                if(temp != -1)
-                    handleOperation(temp);
-                break;
-
-            case identsym:
-                handleIdent(vars);
-                if(temp != -1)
-                    handleOperation(temp);
-                break;
-
-            case plussym:
-            case minussym:
-            case slashsym:
-            case multsym:
-                temp = sym;
-                break;
-
-            case lparentsym:
-                handleParenthesis(vars);
-                if(temp != -1)
-                    handleOperation(temp);
-                break;
-        }
+    if(currentToken.type == oddsym){
+        pushCode(2,0,6);
+        fetchToken();
+        expression();
     }
-    if(!toggleBacklog)
-        fprintf(fileCode,"4 0 %d\n", returnPos);
     else{
-        backlog[backlogPos][0] = 4;
-        backlog[backlogPos][1] = 0;
-        backlog[backlogPos++][2] = returnPos;
-    }
-    lines++;
-}
+        expression();
+        thisOp = currentToken.type;
 
-void handleParenthesis(varArray vars[]){
-    int sym = 0, temp = 0;
-    while(sym != rparentsym){
-        fscanf(fileLexTable,"%d", &sym);//find next sym
-        switch(sym){
-            case numbersym:
-                handleNumber();
-                if(temp != -1)
-                    handleOperation(temp);
+        switch (currentToken.type) {
+            case eqlsym:
+                thisOp = 8;
                 break;
 
-            case identsym:
-                handleIdent(vars);
-                if(temp != -1)
-                    handleOperation(temp);
+            case neqsym:
+                thisOp = 9;
                 break;
 
-            case plussym:
-            case minussym:
-            case slashsym:
-            case multsym:
-                temp = sym;
+            case lessym:
+                thisOp = 10;
                 break;
 
-            case lparentsym:
-                handleParenthesis(vars);
-                if(temp != -1)
-                    handleOperation(temp);
+            case leqsym:
+                thisOp = 11;
+                break;
+
+            case gtrsym:
+                thisOp = 12;
+                break;
+
+            case geqsym:
+                thisOp = 13;
+                break;
+
+            default:
+                printError(20); //relational op needed.
                 break;
         }
+
+        fetchToken();
+        expression();
+        pushCode(2,0,thisOp);
     }
 }
 
-void handleOperation(int sym){
-    operationCount++;
-    switch(sym){
-        case plussym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 2\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 2;
-        }
-        lines++;
-        break;
+//find a variable in the symbol table
+int searchSym(char *name){
+    int i;
+    printf("search from %d >= %d.\n", symTablePos-1, 0);
+    for(i=symTablePos-1; i >= 0; i--){
+        if(strcmp(name,symbolTable[i].name) == 0 && symbolTable[i].addr != -1)
+            return i;
+        if(symbolTable[i].addr == -1)
+            printf("GAH!\n");
+    }
+    return -1; //not found :(
+}
 
-        case minussym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 3\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 3;
+//mark old syms as invalid with -1
+void emptySyms(int level){
+    int i;
+    printf("emptying %d to %d.\n",0, symTablePos-1);
+    for(i=symTablePos-1; i >= 0; i--){
+        if(symbolTable[i].level == level && symbolTable[i].kind != 3){
+            printf("emptied %s.\n",symbolTable[i].name);
+            symbolTable[i].addr = -1;
         }
-        lines++;
-        break;
-
-        case multsym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 4\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 4;
-        }
-        lines++;
-        break;
-
-        case slashsym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 5\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 5;
-        }
-        lines++;
-        break;
-
-        case eqlsym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 8\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 8;
-        }
-        lines++;
-        break;
-
-        //! XX % XX not handled ???
-
-        case neqsym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 9\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 9;
-        }
-        lines++;
-        break;
-
-        case lessym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 10\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 10;
-        }
-        lines++;
-        break;
-
-        case leqsym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 11\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 11;
-        }
-        lines++;
-        break;
-
-        case gtrsym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 12\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 12;
-        }
-        lines++;
-        break;
-
-        case geqsym:
-        if(!toggleBacklog)
-            fprintf(fileCode,"2 0 13\n");
-        else{
-            backlog[backlogPos][0] = 2;
-            backlog[backlogPos][1] = 0;
-            backlog[backlogPos++][2] = 13;
-        }
-        lines++;
-        break;
     }
 }
 
-void handleIdent(varArray vars[]){
-    int position, sym;
-    char varname[identMax];
-    fscanf(fileLexTable,"%s", varname); // varname
-    position = findReturnPos(varname,vars); // get return address
-    if(!toggleBacklog)
-        fprintf(fileCode,"3 0 %d\n", position); //add variable to stack
-    else{
-        backlog[backlogPos][0] = 3;
-        backlog[backlogPos][1] = 0;
-        backlog[backlogPos++][2] = position;
-    }
-    lines++;
+//Add to sym table
+void pushSymTable(int kind, Token t, int L, int M, int num){
+    symbolTable[symTablePos].kind = kind;
+    strcpy(symbolTable[symTablePos].name,t.name);
+    symbolTable[symTablePos].level = L;
+    symbolTable[symTablePos].addr = M;
+    if(kind == 1)
+        symbolTable[symTablePos].val = num;
+    else if (kind == 2)
+        currentM++;
+    symTablePos++;
 }
 
-void handleNumber(){
-    int sym;
-    fscanf(fileLexTable,"%d", &sym); // "##"
-    if(!toggleBacklog)
-        fprintf(fileCode,"1 0 %d\n", sym);//add number to stack
-    else{
-        backlog[backlogPos][0] = 1;
-        backlog[backlogPos][1] = 0;
-        backlog[backlogPos++][2] = sym;
+int toInt(char *num){
+    int returner = 0, i = 0;
+    while(num[i] != '\0'){
+        returner *= 10;
+        returner += num[i] - '0';
+        i++;
     }
-    lines++;
+    return returner;
 }
 
-void handleRead(varArray vars[]){
-    int sym = 0, returnPos = 0;
-    char varname[identMax];
-    fscanf(fileLexTable,"%d", &sym); // "2"
-    fscanf(fileLexTable,"%s", varname); //variable
-    returnPos = findReturnPos(varname,vars); // get return address
-    if(!toggleBacklog)
-        fprintf(fileCode,"9 0 1\n"); //Read from screen
-    else{
-        backlog[backlogPos][0] = 9;
-        backlog[backlogPos][1] = 0;
-        backlog[backlogPos++][2] = 1;
+void toFile(){
+    int i;
+    for(i=0; i< MCodePos; i++){
+        fprintf(fileMCode,"%d %d %d\n",MCode[i].OP, MCode[i].L, MCode[i].M);
     }
-    lines++;
-    if(!toggleBacklog)
-        fprintf(fileCode,"4 0 %d\n", returnPos); //Store in stack
-    else{
-        backlog[backlogPos][0] = 4;
-        backlog[backlogPos][1] = 0;
-        backlog[backlogPos++][2] = returnPos;
-    }
-    lines++;
-}
-
-void handleWrite(varArray vars[]){
-    int sym = 0, returnPos = 0;
-    char varname[identMax];
-    fscanf(fileLexTable,"%d", &sym); // "2"
-    fscanf(fileLexTable,"%s", varname); //variable
-    returnPos = findReturnPos(varname,vars); // get return address
-    if(!toggleBacklog)
-        fprintf(fileCode,"3 0 %d\n", returnPos); //put into stack
-    else{
-        backlog[backlogPos][0] = 3;
-        backlog[backlogPos][1] = 0;
-        backlog[backlogPos++][2] = returnPos;
-    }
-    lines++;
-    if(!toggleBacklog)
-        fprintf(fileCode,"9 0 0\n"); //Write to screen
-    else{
-        backlog[backlogPos][0] = 9;
-        backlog[backlogPos][1] = 0;
-        backlog[backlogPos++][2] = 0;
-    }
-    lines++;
-}
-
-int findReturnPos(char varname[], varArray vars[]){
-    int run = 1, returnPos = 0;
-    while(strcmp(vars[returnPos].name, varname) != 0){ // Run until you find pos
-        returnPos++;
-    }
-    returnPos+=3; //Plus 4(+1 from final pos++)
-    return returnPos;
 }

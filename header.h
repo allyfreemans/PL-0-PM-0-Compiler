@@ -13,8 +13,8 @@
 
 //Constants
 #define MAX_STACK_HEIGHT 2000
-#define MAX_SYMBOL_TABLE_SIZE 100
-#define MAX_CODE_LENGTH 500
+#define MAX_SYMBOL_TABLE_SIZE 2000
+#define MAX_CODE_LENGTH 2000
 #define MAX_LEXI_LEVELS 3
 #define identMax 12
 #define numMax 6
@@ -53,6 +53,7 @@
 # define OUT_OF_MEMORY 31
 # define HALT 32
 # define ERROR_INVALID_ELSE 33
+# define ERROR_IDENT_EXPECTED 34
 
 #ifndef GLB
 #define GLB
@@ -67,6 +68,26 @@ typedef struct symbol {
     int level; // L level
     int addr; // M address
 } symTable;
+
+//Struct
+typedef struct instr{
+	int OP;
+	int L;
+	int M;
+} instruction;
+/*
+For constants, you must store kind, name and value.
+For variables, you must store kind, name, L and M.
+For procedures, you must store kind, name, L and M.
+*/
+
+//Lex table
+typedef struct tokens{
+    int type;
+    char name[identMax];
+} Token;
+
+Token tokenList[MAX_CODE_LENGTH];
 
 #endif // GLB
 

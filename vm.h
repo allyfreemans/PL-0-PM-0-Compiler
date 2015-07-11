@@ -10,22 +10,15 @@ enum OPCODE {FCH, LIT, OPR, LOD, STO, CAL, INC, JMP, JPC, SIO};
 enum STACK_OPERATION {RET, NEG, ADD, SUB, MUL, DIV, ODD, MOD, EQL, NEQ, LSS, LEQ, GTR, GEQ};
 enum SIO_OPERATION {SOT = 1, SIN};
 
-//Struct
-struct instruction{
-	int OP;
-	int L;
-	int M;
-};
-
 //Register
 int BP = 1;
 int SP = 0;
 int PC = 0;
-struct instruction IR;
+instruction IR;
 
 //Global Arrays
 int stack[MAX_STACK_HEIGHT];
-struct instruction code[MAX_CODE_LENGTH];
+instruction code[MAX_CODE_LENGTH];
 
 //Files
 FILE *fileCode;
@@ -344,7 +337,7 @@ void printError(int n){
             printf("\nAn error has occurred: ""then"" expected.\n");
             break;
         case 17:
-            printf("\nAn error has occurred: ""}"" expected.\n");
+            printf("\nAn error has occurred: "";"" or }"" expected.\n");
             break;
         case 18:
             printf("\nAn error has occurred: ""do"" expected.\n");
