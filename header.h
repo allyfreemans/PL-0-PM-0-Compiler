@@ -64,7 +64,7 @@ void printError(int n){
             printf("Semicolon needed between statements.\n");
             break;
         case 14:
-            printf("Cannot begin with this symbol\n");
+            printf("Cannot begin statement with this symbol\n");
             break;
         case 15:
             printf("Undeclared variable detected\n");
@@ -96,8 +96,11 @@ void printError(int n){
         case 24:
             printf("Period expected\n");
             break;
+        case 25:
+            printf("Var or const detected more than once\n");
+            break;
         default:
-            printf("An error has occurred: ???.\n");
+            printf("An error has occurred.\n");
         }
     exit(n);
 }

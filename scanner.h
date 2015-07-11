@@ -16,7 +16,7 @@ FILE *fileLexTable;
 FILE *fileLexTableList;
 
 int tokenPos = 0;
-int rows = 0;
+int rows = 1;
 int collumns = 0;
 
 //Functions
@@ -333,8 +333,23 @@ void removeComments(){
                     scanner = fgetc(fileCode);
             }
             else{
-                printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
-                printError(18);
+                if((int)scanner < 32)
+                    scanner = fgetc(fileCode);
+                else if(scanner == '/'){
+                    scanner = fgetc(fileCode);
+                    if(scanner == '*'){
+                        flag = 1;
+                        scanner = fgetc(fileCode);
+                    }
+                    else{
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                        printError(18);
+                    }
+                }
+                else{
+                    printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                    printError(18);
+                }
             }
         }
     }

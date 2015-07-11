@@ -32,14 +32,18 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="cleaninput.txt" />
 		<Unit filename="compiler.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="header.h" />
-		<Unit filename="input.txt" />
+		<Unit filename="input.pl0" />
+		<Unit filename="lexemelist.txt" />
+		<Unit filename="lexemetable.txt" />
 		<Unit filename="mcode.txt" />
 		<Unit filename="parser.h" />
 		<Unit filename="scanner.h" />
+		<Unit filename="stacktrace.txt" />
 		<Unit filename="vm.h" />
 		<Extensions>
 			<code_completion />

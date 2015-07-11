@@ -14,10 +14,10 @@ int MCodePos = 0; //currentMCodeTableIndex
 
 int currentM = 0; //currentMAddress
 int lexLevel = 0; //lexiLevel
-int collumn = 0;
-int row = 1;
-int counted = 0;
-int numProcedures = 0;
+int collumn = 0, row = 1;
+int counted = 0, numProcedures = 0;
+int varLevel = 0, constLevel = 0;
+int varNum = 0, constNum = 0;
 
 void getToken();
 void block();
@@ -138,6 +138,14 @@ void pushCode(int OP, int L, int M){
 //deal with consts
 void constFound(){
     Token tempT;
+    if(constNum >= 1){
+        if(constLevel == lexLevel){
+            printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
+            printError(25);
+        }
+    }
+    constNum++;
+    constLevel = lexLevel;
     do{
         fetchToken();
         if(currentToken.type != identsym){
@@ -174,6 +182,15 @@ void constFound(){
 //Deal with vars
 void varFound(){
     int run = 1;
+    if(varNum >= 1){
+        if(varLevel == lexLevel){
+            printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
+            printError(25);
+        }
+    }
+    varNum++;
+    varLevel = lexLevel;
+
     do{
         fetchToken();
         if(currentToken.type != identsym){
@@ -211,6 +228,7 @@ void procedureFound(){
 
     lexLevel++;
     numProcedures++;
+    varNum = 0;
 
     fetchToken();
     if(currentToken.type != semicolonsym){
@@ -276,7 +294,7 @@ void statement(){
 
         if(currentToken.type != identsym){
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
-            printError(12); //assignment to const/proc not valid
+            printError(10); //assignment to const/proc not valid
         }
 
         symPos = searchSym(currentToken.name, lexLevel);
@@ -307,8 +325,7 @@ void statement(){
         //printf("on %d.\n", currentToken.type);
         if(currentToken.type != endsym){
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
-            printf("sym: %d.",currentToken.type);
-            printError(19); //semicolon or } expected
+            printError(14); //endsym expected
         }
 
         fetchToken();
@@ -413,6 +430,10 @@ void statement(){
             pushCode(3,0,symbolTable[symPos].addr); //read from screen
 
             pushCode(9,0,0); //output statement
+        }
+        else{
+            printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
+            printError(10); //undeclared variable found
         }
     }
 }
