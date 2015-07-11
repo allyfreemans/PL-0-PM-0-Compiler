@@ -1,16 +1,11 @@
-var x, w, o;
-var e;
-const y = 6, z = 9, r = 3;
-const f = 1;
+var x,w;
+const y = 9;
 
 procedure mappy;
-var u, g;
+var u;
 begin
 	u := 3;
 	x := 88;
-	x := x + 1;
-	x := x - 1;
-	x := 99;
 end;
 
 begin
@@ -46,8 +41,7 @@ begin
 	
 	
 	
-	
-	
+	call mappy;
 	
 	
 	write w; 

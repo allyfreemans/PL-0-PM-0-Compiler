@@ -1,4 +1,3 @@
-//TODO: SYMBOL TABLE
 #include "header.h"
 
 //enums table
@@ -7,7 +6,7 @@ typedef enum{
 	oddsym, eqlsym, neqsym, lessym, leqsym, gtrsym, geqsym, lparentsym,
 	rparentsym, commasym, semicolonsym, periodsym, becomessym, beginsym, endsym,
 	ifsym, thensym, whilesym, dosym, callsym, constsym, varsym, procsym, writesym,
-	readsym, elsesym, errsym
+	readsym, elsesym, errsym, newlinesym
 } token;
 
 //Files
@@ -58,7 +57,10 @@ void removeComments(){
     while (scanner != EOF){
         if(flag == 1){ //if comment ignoring is active
             scanner = fgetc(fileCode);
-            if (scanner == '*'){
+            if(scanner == 10){
+                tokenList[tokenPos++].type = newlinesym;
+            }
+            else if (scanner == '*'){
                 scanner = fgetc(fileCode);
                 if(scanner == '/'){
                     flag = 0;
@@ -68,12 +70,14 @@ void removeComments(){
         }
         else{
             if((int)scanner == 32 || ((int)scanner == 9)){ //space or tab
-                fprintf(fileCleanCode," ");
+                fprintf(fileCleanCode,"%c",scanner);
                 scanner = fgetc(fileCode);
             } //is space, do nothing.
             else if(((int)scanner == 10) || ((int)scanner == 59)){ //is newline or ';'
                 fprintf(fileCleanCode,"%c", scanner);
-
+                if(scanner == 10){
+                    tokenList[tokenPos++].type = newlinesym;
+                }
                 if(scanner == 59){
                     strcpy(tokenList[tokenPos].name, ";");
                     tokenList[tokenPos++].type = semicolonsym;
@@ -86,6 +90,9 @@ void removeComments(){
                     if(scanner == 59){
                         strcpy(tokenList[tokenPos].name, ";");
                         tokenList[tokenPos++].type = semicolonsym;
+                    }
+                    if(scanner == 10){
+                        tokenList[tokenPos++].type = newlinesym;
                     }
                     scanner = fgetc(fileCode);
                 }
@@ -347,7 +354,9 @@ void printTable(){
 
     fprintf(fileLexTable,"lexeme      token type\n");
     for(i=0; i<tokenPos; i++){
-        fprintf(fileLexTable,"%-11s %d\n", tokenList[i].name, tokenList[i].type);
+        if(tokenList[i].type == newlinesym){}
+        else
+            fprintf(fileLexTable,"%-11s %d\n", tokenList[i].name, tokenList[i].type);
     }
 }
 
@@ -356,13 +365,16 @@ void printList(int flag){
     if(flag)
         printf("\nLexeme List:\n");
     for(i=0; i<tokenPos; i++){
-        fprintf(fileLexTableList,"%d ", tokenList[i].type);
-        if(flag)
-            printf("%d ", tokenList[i].type);
-        if(tokenList[i].type == identsym || tokenList[i].type == numbersym){
-            fprintf(fileLexTableList,"%s ", tokenList[i].name);
+        if(tokenList[i].type == newlinesym){}
+        else{
+            fprintf(fileLexTableList,"%d ", tokenList[i].type);
             if(flag)
-                printf("%s ", tokenList[i].name);
+                printf("%d ", tokenList[i].type);
+            if(tokenList[i].type == identsym || tokenList[i].type == numbersym){
+                fprintf(fileLexTableList,"%s ", tokenList[i].name);
+                if(flag)
+                    printf("%s ", tokenList[i].name);
+            }
         }
     }
     if(flag)
