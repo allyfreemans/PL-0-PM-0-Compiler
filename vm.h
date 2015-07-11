@@ -303,13 +303,13 @@ void printError(int n){
         case 5:
             printf("\nAn error has occurred: "";"" or "","" missing.\n");
             break;
-        case 6: 
+        case 6:
             printf("\nAn error has occurred: Incorrect sym after ""procedure"" declaration.\n");
             break;
         case 7:
             printf("\nAn error has occurred: Statement expected.\n");
             break;
-        case 8: 
+        case 8:
             printf("\nAn error has occurred: Incorrect sym after ""procedure"" declaration.\n");
             break;
         case 9:
@@ -318,19 +318,19 @@ void printError(int n){
         case 10:
             printf("\nAn error has occurred: "";"" between statements expected.\n");
             break;
-        case 11: 
+        case 11:
             printf("\nAn error has occurred: Undeclared identifier.\n");
             break;
-        case 12: 
+        case 12:
             printf("\nAn error has occurred: Assignment to ""const"" or ""procedure"".\n");
             break;
-        case 13: 
+        case 13:
             printf("\nAn error has occurred: Assignment op expected.\n");
             break;
-        case 14: 
+        case 14:
             printf("\nAn error has occurred: identifier after ""call"" expected.\n");
             break;
-        case 15: 
+        case 15:
             printf("\nAn error has occurred: ""const"" or ""var"" call is unused.\n");
             break;
         case 16:
@@ -387,7 +387,7 @@ void printError(int n){
         case 33:
             printf("\nAn error has occurred: Invalid use of ""else""\n");
             return;
-        case 33:
+        case 34:
             printf("\nAn error has occurred: Variable expected.\n");
             return;
         default:
