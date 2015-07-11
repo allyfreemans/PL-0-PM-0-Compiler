@@ -45,13 +45,13 @@ void vm(int flag){
 
     fileCode = fopen(nameMCode,"r");
     if(fileCode == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
     loadFile();
 
     fileTrace = fopen(nameTrace,"w");
     if(fileTrace == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
     writeCode(0);
 
@@ -65,7 +65,7 @@ void loadFile(){
     int OP, L, M, i = 0;
     while(fscanf(fileCode,"%d",&OP) != EOF){
         if(i>MAX_CODE_LENGTH)
-            printError(ERROR_CODE_OVERFLOW);
+            printError(22);
 
         fscanf(fileCode, "%d", &L);
         fscanf(fileCode, "%d", &M);
@@ -179,12 +179,13 @@ void execute_cycle(int flag){
             else if(IR.M == 2){
                 fclose(fileTrace);
                 printToScreen(flag);
-                printError(HALT);
+                exit(0);
                 exit(32);
             }
 			break;
 		case 10:
-		    break;	//nothing for now
+		    exit(0);
+		    break;
 		default:
 			exit(-98);
     }
@@ -248,7 +249,7 @@ void operate(){
 			stack[SP] = stack[SP] >= stack[SP + 1];
 			break;
 		default:
-			printError(27);
+			printError(17);
 	}
 }
 

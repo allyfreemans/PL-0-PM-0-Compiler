@@ -28,7 +28,7 @@ void *scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
 
     fileCode = fopen(nameCode,"r");
     if(fileCode == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
     removeComments();
     printLexeme(flag);
@@ -50,7 +50,7 @@ void removeComments(){
 
     fileCleanCode = fopen(nameCleanCode,"w");
     if(fileCleanCode == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
 
     fscanf(fileCode, "%c", &scanner);
@@ -202,10 +202,10 @@ void removeComments(){
                             scanner = fgetc(fileCode);
                         }
                         else
-                            printError(ERROR_INVALID_SYM);
+                            printError(18);
                         break;
                     default:
-                        printError(ERROR_INVALID_SYM);
+                        printError(18);
                 }
                 if(scanner == EOF)
                     break;
@@ -219,7 +219,7 @@ void removeComments(){
 
                 while((int)scanner <= 57 && (int)scanner >= 48){
                     if(count >= numMax)
-                        printError(ERROR_NUM_OVERFLOW);
+                        printError(20);
                     scanner = fgetc(fileCode);
                     if(((int)scanner >= 58 && (int)scanner <= 62) || ((int)scanner >= 40 && (int)scanner <= 47) || ((int)scanner == 32) || ((int)scanner == 10) || ((int)scanner == 9) || ((int)scanner == 59)){//not a letter. must break!
                         ignore_flag = 1;
@@ -245,7 +245,7 @@ void removeComments(){
 
                 while((((int)scanner <= 57 && (int)scanner >= 48) || ((int)scanner <= 122 && (int)scanner >= 97 )) && (int)scanner > 32){
                     if(count >= identMax)
-                        printError(ERROR_IDENT_OVERFLOW);
+                        printError(21);
                     if((int)scanner < 32)
                         break;
                     scanner = fgetc(fileCode);
@@ -334,7 +334,7 @@ void removeComments(){
 void printLexeme(int flag){
     fileLexTable = fopen(nameLexTable,"w");
     if(fileLexTable == NULL)
-        printError(OUT_OF_MEMORY);
+        printError(23);
 
     printTable();
 
@@ -342,7 +342,7 @@ void printLexeme(int flag){
 
     fileLexTableList = fopen(nameLexTableList,"w");
     if(fileLexTableList == NULL)
-        printError(OUT_OF_MEMORY);
+        printError(23);
 
     printList(flag);
 
