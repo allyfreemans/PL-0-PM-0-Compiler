@@ -173,7 +173,7 @@ void statement(){
 
     if(currentToken.type == identsym){
         symbolPos = searchSym(currentToken.name);
-        printf("%s at pos: %d.\n",currentToken.name,symbolPos);
+        //printf("%s at pos: %d.\n",currentToken.name,symbolPos);
 
         if(symbolPos == -1)
             printError(11); //undeclared variable found
@@ -221,7 +221,7 @@ void statement(){
             fetchToken();
             statement();
         }
-        printf("on %d.\n", currentToken.type);
+        //printf("on %d.\n", currentToken.type);
         if(currentToken.type != endsym)
             printError(17); //semicolon or } expected
 
@@ -435,12 +435,10 @@ void condition(){
 //find a variable in the symbol table
 int searchSym(char *name){
     int i;
-    printf("search from %d >= %d.\n", symTablePos-1, 0);
+    //printf("search from %d >= %d.\n", symTablePos-1, 0);
     for(i=symTablePos-1; i >= 0; i--){
         if(strcmp(name,symbolTable[i].name) == 0 && symbolTable[i].addr != -1)
             return i;
-        if(symbolTable[i].addr == -1)
-            printf("GAH!\n");
     }
     return -1; //not found :(
 }
@@ -448,10 +446,9 @@ int searchSym(char *name){
 //mark old syms as invalid with -1
 void emptySyms(int level){
     int i;
-    printf("emptying %d to %d.\n",0, symTablePos-1);
+    //printf("emptying %d to %d.\n",0, symTablePos-1);
     for(i=symTablePos-1; i >= 0; i--){
         if(symbolTable[i].level == level && symbolTable[i].kind != 3){
-            printf("emptied %s.\n",symbolTable[i].name);
             symbolTable[i].addr = -1;
         }
     }
