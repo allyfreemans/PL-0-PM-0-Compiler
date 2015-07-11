@@ -16,6 +16,8 @@ FILE *fileLexTable;
 FILE *fileLexTableList;
 
 int tokenPos = 0;
+int rows = 0;
+int collumns = 0;
 
 //Functions
 void removeComments();
@@ -58,7 +60,7 @@ void removeComments(){
         if(flag == 1){ //if comment ignoring is active
             scanner = fgetc(fileCode);
             if(scanner == 10){
-                tokenList[tokenPos++].type = newlinesym;
+                tokenList[tokenPos++].type = newlinesym; rows++; collumns = tokenPos;
             }
             else if (scanner == '*'){
                 scanner = fgetc(fileCode);
@@ -76,14 +78,13 @@ void removeComments(){
             else if(((int)scanner == 10) || ((int)scanner == 59)){ //is newline or ';'
                 fprintf(fileCleanCode,"%c", scanner);
                 if(scanner == 10){
-                    tokenList[tokenPos++].type = newlinesym;
+                    tokenList[tokenPos++].type = newlinesym; rows++; collumns = tokenPos;
                 }
                 if(scanner == 59){
                     strcpy(tokenList[tokenPos].name, ";");
                     tokenList[tokenPos++].type = semicolonsym;
                 }
 
-                numLines++;
                 scanner = fgetc(fileCode);
                 while(((int)scanner == 10) || ((int)scanner == 59) || ((int)scanner == 32) || ((int)scanner == 9) || ((int)scanner == 3)){
                     fprintf(fileCleanCode,"%c",scanner);
@@ -92,7 +93,7 @@ void removeComments(){
                         tokenList[tokenPos++].type = semicolonsym;
                     }
                     if(scanner == 10){
-                        tokenList[tokenPos++].type = newlinesym;
+                        tokenList[tokenPos++].type = newlinesym; rows++; collumns = tokenPos;
                     }
                     scanner = fgetc(fileCode);
                 }
@@ -201,10 +202,13 @@ void removeComments(){
                             fprintf(fileCleanCode,":=");
                             scanner = fgetc(fileCode);
                         }
-                        else
+                        else{
+                            printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
                             printError(18);
+                        }
                         break;
                     default:
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
                         printError(18);
                 }
                 if(scanner == EOF)
@@ -218,8 +222,10 @@ void removeComments(){
                ignore_flag = 0;
 
                 while((int)scanner <= 57 && (int)scanner >= 48){
-                    if(count >= numMax)
+                    if(count >= numMax){
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
                         printError(20);
+                    }
                     scanner = fgetc(fileCode);
                     if(((int)scanner >= 58 && (int)scanner <= 62) || ((int)scanner >= 40 && (int)scanner <= 47) || ((int)scanner == 32) || ((int)scanner == 10) || ((int)scanner == 9) || ((int)scanner == 59)){//not a letter. must break!
                         ignore_flag = 1;
@@ -244,8 +250,10 @@ void removeComments(){
 
 
                 while((((int)scanner <= 57 && (int)scanner >= 48) || ((int)scanner <= 122 && (int)scanner >= 97 )) && (int)scanner > 32){
-                    if(count >= identMax)
+                    if(count >= identMax){
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
                         printError(21);
+                    }
                     if((int)scanner < 32)
                         break;
                     scanner = fgetc(fileCode);
@@ -324,8 +332,10 @@ void removeComments(){
                 if(!ignore_flag)
                     scanner = fgetc(fileCode);
             }
-            else //might be invalid symbol
-                scanner = EOF;
+            else{
+                printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                printError(18);
+            }
         }
     }
     fclose(fileCleanCode);
