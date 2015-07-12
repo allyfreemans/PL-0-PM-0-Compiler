@@ -1,6 +1,35 @@
 var w,x;
 const y = 7;
 
+/* nested procedure testing */
+procedure bappy;
+	procedure rappy;
+	var a;
+		procedure mappy;
+		const c = 9;
+		begin
+			w := c;
+		end;
+	begin
+		read a;
+		w := 9;
+		call mappy;
+	end;
+begin
+	w:= 7;
+	call rappy;
+end;
+/* end nested procedure testing */
+
+/*testing procedure calling a procedure */
+procedure mult;
+var i;
+begin
+	read i;
+	w := w * i;
+end;
+/*end procedure call testing */
+
 procedure mappy;
 var u, z;
 begin
@@ -35,8 +64,10 @@ begin
 	/* end while/do testing */
 	write u;
 	write z;
+	call mult;
 end;
 
+/* main */
 begin
 	x := 4;
 	read w;
@@ -72,6 +103,10 @@ begin
 	/* procedure testing */
 	call mappy;
 	/* end procedure testing */
+	
+	/* nested procedure testing */
+	call bappy;
+	/* end nested procedure testing */
 	
 	write w; 
 	write x;
