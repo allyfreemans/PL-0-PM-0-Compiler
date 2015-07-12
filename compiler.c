@@ -4,9 +4,6 @@
 #include "vm.h"
 #include "header.h"
 
-/* compile: gcc compiler.c -o compile
-   run: ./compile  -a -v -l */
-
 int main(int argc, char *argv[]){
     int l=0,a=0,v=0,i=0;
 
@@ -23,11 +20,8 @@ int main(int argc, char *argv[]){
         }
     }
     scanner(l);
-    //printf("Scanner done.\n");
     parser(a);
-    //printf("Parser done.\n");
     vm(v);
-    //printf("VM done.\n");
 
     return 0;
 }

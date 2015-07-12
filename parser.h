@@ -6,8 +6,7 @@ FILE *fileMCode;
 //Global variables
 symTable symbolTable[MAX_SYMBOL_TABLE_SIZE];
 Token currentToken;
-int symTablePos = 0;
-int tokenTablePos = 0;
+int symTablePos = 0, tokenTablePos = 0;
 
 instruction MCode[MAX_CODE_LENGTH]; //MCodeTable
 int MCodePos = 0; //currentMCodeTableIndex
@@ -19,24 +18,23 @@ int counted = 0, numProcedures = 0;
 int varLevel = 0, constLevel = 0;
 int varNum = 0, constNum = 0;
 
-void getToken();
-void block();
-void pushCode(int OP, int L, int M);
-void constFound();
-void pushSymTable(int kind, Token token, int L, int M, int num);
-int  toInt(char *num);
-void varFound();
-void procedureFound();
-void statement();
-int  searchSym(char *name, int level);
-void expression();
-void term();
-void factor();
-void condition();
-void toFile();
+//Procedures
 void analyze();
-void emptySyms(int l);
-void printMCode();
+void runBlock();
+void constFound();
+void varFound();
+void statementFound();
+void expressionFound();
+void termFound();
+void factorFound();
+void operationFound();
+void procedureFound();
+void voidSyms(int level);
+void pushSymTable(int kind, Token t, int L, int M, int num);
+void fetchToken();
+void printMCode(int flag);
+void toCode(int OP, int L, int M);
+void toFile();
 
 //Run the main section
 void parser(int flag){
@@ -52,56 +50,23 @@ void parser(int flag){
     printMCode(flag);
 }
 
-void printMCode(int flag){
-    char c;
-    fileMCode = fopen(nameMCode,"r");
-    if(fileMCode == NULL)
-        printError(1);
-    if(flag){
-        printf("Generated Machine Code:\n");
-        c = fgetc(fileMCode);
-        while(c != EOF){
-            printf("%c",c);
-            c = fgetc(fileMCode);
-        }
-        printf("\n\n");
-    }
-    fclose(fileMCode);
-}
-
-//Fetches the next token to use
-void fetchToken(){
-    currentToken = tokenList[tokenTablePos];
-    tokenTablePos++;
-    if(currentToken.type == newlinesym){
-        while(currentToken.type == newlinesym){
-            row++;
-            collumn = 0;
-            fetchToken();
-        }
-    }
-    else
-        collumn++;
-}
-
 //Do the bulk of the things
 void analyze(){
     fetchToken(); //Grab first token to test
-    block(); // program: block "."
+    runBlock(); // program: block "."
     if(currentToken.type != periodsym){ //"."
         printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
         printError(24);
     }
 }
 
-//the bulkiness
-void block(){
-    int i;
+//the real bulkiness
+void runBlock(){
     counted = 0;
     int tempBlockPos = MCodePos, temPos;
     currentM = 0;
 
-    pushCode(7,0,0); //Start.
+    toCode(7,0,0); //Start.
 
     while(currentToken.type == constsym || currentToken.type == varsym){
     if(currentToken.type == constsym)
@@ -118,21 +83,13 @@ void block(){
 
     MCode[tempBlockPos].M = MCodePos;
 
-    pushCode(6,0,temPos + 4);
-    statement();
+    toCode(6,0,temPos + 4);
+    statementFound();
     if(currentToken.type != periodsym && currentToken.type == semicolonsym){
-        pushCode(2,0,0); //return proc???
+        toCode(2,0,0); //return proc???
     }
     else
-        pushCode(9,0,2);
-}
-
-//push the code
-void pushCode(int OP, int L, int M){
-    MCode[MCodePos].OP = OP;
-    MCode[MCodePos].M = M;
-    MCode[MCodePos].L = L;
-    MCodePos++;
+        toCode(9,0,2);
 }
 
 //deal with consts
@@ -181,7 +138,6 @@ void constFound(){
 
 //Deal with vars
 void varFound(){
-    int run = 1;
     if(varNum >= 1){
         if(varLevel == lexLevel){
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
@@ -210,45 +166,8 @@ void varFound(){
     fetchToken();
 }
 
-//deal with procedure declarations
-void procedureFound(){
-    numProcedures++;
-    fetchToken();
-    if(currentToken.type != identsym){
-        printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
-        printError(8); //const/int/proc must have ident after
-    }
-
-    if(numProcedures == 1){
-        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
-    }
-    else
-        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
-
-
-    lexLevel++;
-    numProcedures++;
-    varNum = 0;
-
-    fetchToken();
-    if(currentToken.type != semicolonsym){
-        printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
-        printError(13); //semicolon needed between statements
-    }
-
-    fetchToken();
-    block(); //run for the proc's insides
-    lexLevel--;
-
-    if(currentToken.type != semicolonsym){
-        printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
-        printError(13); //semicolon needed between statements
-    }
-
-    fetchToken();
-}
-
-void statement(){
+//Deal with a statement line
+void statementFound(){
     int symPos, identPos, tempBPos, temPos, temPos2;
 
     if(currentToken.type == identsym){
@@ -280,14 +199,14 @@ void statement(){
         }
 
         fetchToken();
-        expression();
+        expressionFound();
 
         if(currentToken.type != semicolonsym){
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
             printError(13); //semicolon needed between statements
         }
 
-        pushCode(4, lexLevel-symbolTable[symPos].level, identPos);
+        toCode(4, lexLevel-symbolTable[symPos].level, identPos);
     }
     else if(currentToken.type == callsym){
         fetchToken();
@@ -311,16 +230,16 @@ void statement(){
 
         fetchToken();
 
-        pushCode(5, lexLevel, symbolTable[symPos].addr);
+        toCode(5, lexLevel, symbolTable[symPos].addr);
 
     }
     else if(currentToken.type == beginsym){
         fetchToken();
-        statement();
+        statementFound();
 
         while(currentToken.type == semicolonsym){
             fetchToken();
-            statement();
+            statementFound();
         }
         //printf("on %d.\n", currentToken.type);
         if(currentToken.type != endsym){
@@ -330,12 +249,12 @@ void statement(){
 
         fetchToken();
         lexLevel++; //!?
-        emptySyms(lexLevel);
+        voidSyms(lexLevel);
         lexLevel--; //!?
     }
     else if(currentToken.type == ifsym){
         fetchToken();
-        condition();
+        operationFound();
         if(currentToken.type != thensym){
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
             printError(6); // then expected after if
@@ -344,9 +263,9 @@ void statement(){
         fetchToken();
         tempBPos = MCodePos;
 
-        pushCode(8,0,0);
+        toCode(8,0,0);
 
-        statement();
+        statementFound();
         MCode[tempBPos].M = MCodePos;
 
         fetchToken();
@@ -369,10 +288,10 @@ void statement(){
 
             tempBPos = MCodePos;
 
-            pushCode(7,0,0);
+            toCode(7,0,0);
 
             fetchToken();
-            statement();
+            statementFound();
             MCode[tempBPos].M = MCodePos;
         }
     }
@@ -380,11 +299,11 @@ void statement(){
         temPos = MCodePos;
 
         fetchToken();
-        condition();
+        operationFound();
 
         temPos2 = MCodePos;
 
-        pushCode(8,0,0);
+        toCode(8,0,0);
 
         if(currentToken.type != dosym){
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
@@ -392,9 +311,9 @@ void statement(){
         }
 
         fetchToken();
-        statement();
+        statementFound();
 
-        pushCode(7,0,temPos);
+        toCode(7,0,temPos);
 
         MCode[temPos2].M = MCodePos;
     }
@@ -410,9 +329,9 @@ void statement(){
             }
             fetchToken();
 
-            pushCode(9,0,1); //read from screen
+            toCode(9,0,1); //read from screen
 
-            pushCode(4,0,symbolTable[symPos].addr); //increment mcode
+            toCode(4,0,symbolTable[symPos].addr); //increment mcode
         }
     }
     else if(currentToken.type == writesym){
@@ -427,9 +346,9 @@ void statement(){
             }
             fetchToken();
 
-            pushCode(3,0,symbolTable[symPos].addr); //read from screen
+            toCode(3,0,symbolTable[symPos].addr); //read from screen
 
-            pushCode(9,0,0); //output statement
+            toCode(9,0,0); //output
         }
         else{
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
@@ -438,51 +357,50 @@ void statement(){
     }
 }
 
-
-//expression work
-void expression(){
+//Expression work
+void expressionFound(){
     int thisOp;
 
     if(currentToken.type == plussym || currentToken.type == minussym){
         thisOp = currentToken.type;
 
         if(thisOp == minussym)
-            pushCode(2,0,1);
+            toCode(2,0,1);
     }
-    term();
+    termFound();
 
     while(currentToken.type == plussym || currentToken.type == minussym){
         thisOp = currentToken.type;
         fetchToken();
-        term();
+        termFound();
 
         if(thisOp == plussym)
-            pushCode(2,0,2);
+            toCode(2,0,2);
         else
-            pushCode(2,0,3);
+            toCode(2,0,3);
     }
 }
 
 //terms and things
-void term(){
+void termFound(){
     int thisOp;
 
-    factor();
+    factorFound();
 
     while(currentToken.type == multsym || currentToken.type == slashsym){
         thisOp = currentToken.type;
         fetchToken();
-        factor();
+        factorFound();
 
         if(thisOp == multsym)
-            pushCode(2,0,4);
+            toCode(2,0,4);
         else
-            pushCode(2,0,5);
+            toCode(2,0,5);
     }
 }
 
 //factors and fun
-void factor(){
+void factorFound(){
     int symPos;
 
     if(currentToken.type == identsym){
@@ -495,19 +413,19 @@ void factor(){
         }
 
         if(symbolTable[symPos].kind == 1)
-            pushCode(1, 0, symbolTable[symPos].val);
+            toCode(1, 0, symbolTable[symPos].val);
         else
-            pushCode(3, lexLevel-symbolTable[symPos].level, symbolTable[symPos].addr);
+            toCode(3, lexLevel-symbolTable[symPos].level, symbolTable[symPos].addr);
 
         fetchToken();
     }
     else if(currentToken.type == numbersym){
-        pushCode(1, 0, toInt(currentToken.name));
+        toCode(1, 0, toInt(currentToken.name));
         fetchToken();
     }
     else if (currentToken.type == lparentsym){
         fetchToken();
-        expression();
+        expressionFound();
 
         if(currentToken.type != rparentsym){
             printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
@@ -522,16 +440,16 @@ void factor(){
     }
 }
 
-void condition(){
+//Mathematical operation
+void operationFound(){
     int thisOp;
-
     if(currentToken.type == oddsym){
-        pushCode(2,0,6);
+        toCode(2,0,6);
         fetchToken();
-        expression();
+        expressionFound();
     }
     else{
-        expression();
+        expressionFound();
         thisOp = currentToken.type;
 
         switch (currentToken.type) {
@@ -568,11 +486,48 @@ void condition(){
                 printError(11); //relational op needed.
                 break;
         }
-
         fetchToken();
-        expression();
-        pushCode(2,0,thisOp);
+        expressionFound();
+        toCode(2,0,thisOp);
     }
+}
+
+//deal with procedure declarations
+void procedureFound(){
+    numProcedures++;
+    fetchToken();
+    if(currentToken.type != identsym){
+        printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
+        printError(8); //const/int/proc must have ident after
+    }
+
+    if(numProcedures == 1){
+        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
+    }
+    else
+        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
+
+
+    lexLevel++;
+    numProcedures++;
+    varNum = 0;
+
+    fetchToken();
+    if(currentToken.type != semicolonsym){
+        printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
+        printError(13); //semicolon needed between statements
+    }
+
+    fetchToken();
+    runBlock(); //run for the proc's insides
+    lexLevel--;
+
+    if(currentToken.type != semicolonsym){
+        printf("\nError: Line:%d, Collumn:%d :: ",row,collumn);
+        printError(13); //semicolon needed between statements
+    }
+
+    fetchToken();
 }
 
 //find a variable in the symbol table
@@ -590,7 +545,7 @@ int searchSym(char *name, int level){
 }
 
 //mark old syms as invalid with -1
-void emptySyms(int level){
+void voidSyms(int level){
     int i;
     //printf("emptying %d to %d.\n",0, symTablePos-1);
     for(i=symTablePos-1; i >= 0; i--){
@@ -613,6 +568,39 @@ void pushSymTable(int kind, Token t, int L, int M, int num){
     symTablePos++;
 }
 
+//Fetches the next token to use
+void fetchToken(){
+    currentToken = tokenList[tokenTablePos];
+    tokenTablePos++;
+    if(currentToken.type == newlinesym){
+        while(currentToken.type == newlinesym){
+            row++;
+            collumn = 0;
+            fetchToken();
+        }
+    }
+    else
+        collumn++;
+}
+
+//Print the MCode to the screen if needed
+void printMCode(int flag){
+    char c;
+    fileMCode = fopen(nameMCode,"r");
+    if(fileMCode == NULL)
+        printError(1);
+    if(flag){
+        printf("Generated Machine Code:\n");
+        c = fgetc(fileMCode);
+        while(c != EOF){
+            printf("%c",c);
+            c = fgetc(fileMCode);
+        }
+        printf("\n\n");
+    }
+    fclose(fileMCode);
+}
+
 int toInt(char *num){
     int returner = 0, i = 0;
     while(num[i] != '\0'){
@@ -621,6 +609,14 @@ int toInt(char *num){
         i++;
     }
     return returner;
+}
+
+//push the code
+void toCode(int OP, int L, int M){
+    MCode[MCodePos].OP = OP;
+    MCode[MCodePos].M = M;
+    MCode[MCodePos].L = L;
+    MCodePos++;
 }
 
 void toFile(){

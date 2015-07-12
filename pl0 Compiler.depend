@@ -6,22 +6,22 @@
 	"vm.h"
 	"header.h"
 
-1436654658 c:\users\creedtora\downloads\pl0 compiler\scanner.h
+1436725737 c:\users\creedtora\downloads\pl0 compiler\scanner.h
 	"header.h"
 
-1436657715 c:\users\creedtora\downloads\pl0 compiler\header.h
+1436725753 c:\users\creedtora\downloads\pl0 compiler\header.h
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<time.h>
 
-1436657952 c:\users\creedtora\downloads\pl0 compiler\parser.h
+1436725618 c:\users\creedtora\downloads\pl0 compiler\parser.h
 	"header.h"
 
 1436646328 c:\users\creedtora\downloads\pl0 compiler\vm.h
 	"header.h"
 
-1436650114 source:c:\users\creedtora\downloads\pl0 compiler\compiler.c
+1436723889 source:c:\users\creedtora\downloads\pl0 compiler\compiler.c
 	<stdio.h>
 	"scanner.h"
 	"parser.h"
