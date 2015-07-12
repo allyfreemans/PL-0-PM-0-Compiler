@@ -45,13 +45,13 @@ void vm(int flag){
 
     fileCode = fopen(nameMCode,"r");
     if(fileCode == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
     loadFile();
 
     fileTrace = fopen(nameTrace,"w");
     if(fileTrace == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
     writeCode(0);
 
@@ -65,7 +65,7 @@ void loadFile(){
     int OP, L, M, i = 0;
     while(fscanf(fileCode,"%d",&OP) != EOF){
         if(i>MAX_CODE_LENGTH)
-            printError(ERROR_CODE_OVERFLOW);
+            printError(22);
 
         fscanf(fileCode, "%d", &L);
         fscanf(fileCode, "%d", &M);
@@ -179,12 +179,13 @@ void execute_cycle(int flag){
             else if(IR.M == 2){
                 fclose(fileTrace);
                 printToScreen(flag);
-                printError(HALT);
+                exit(0);
                 exit(32);
             }
 			break;
 		case 10:
-		    break;	//nothing for now
+		    exit(0);
+		    break;
 		default:
 			exit(-98);
     }
@@ -248,7 +249,7 @@ void operate(){
 			stack[SP] = stack[SP] >= stack[SP + 1];
 			break;
 		default:
-			printError(27);
+			printError(17);
 	}
 }
 
@@ -284,116 +285,6 @@ void printStack(int flag){
             printf("%d ", stack[i]);
 		fprintf(fileTrace,"%d ", stack[i]);
 	}
-}
-
-void printError(int n){
-    switch(n){
-        case 1:
-            printf("\nAn error has occurred: Use ""="" instead of "":="".\n");
-            break;
-        case 2:
-            printf("\nAn error has occurred: ""="" must be followed by a number.\n");
-            break;
-        case 3:
-            printf("\nAn error has occurred: Identifier must be followed by ""="".\n");
-            break;
-        case 4:
-            printf("\nAn error has occurred: ""const"",""var"",""procedure"" must be followed by ident.\n");
-            break;
-        case 5:
-            printf("\nAn error has occurred: "";"" or "","" missing.\n");
-            break;
-        case 6:
-            printf("\nAn error has occurred: Incorrect sym after ""procedure"" declaration.\n");
-            break;
-        case 7:
-            printf("\nAn error has occurred: Statement expected.\n");
-            break;
-        case 8:
-            printf("\nAn error has occurred: Incorrect sym after ""procedure"" declaration.\n");
-            break;
-        case 9:
-            printf("\nAn error has occurred: ""."" expected.\n");
-            break;
-        case 10:
-            printf("\nAn error has occurred: "";"" between statements expected.\n");
-            break;
-        case 11:
-            printf("\nAn error has occurred: Undeclared identifier.\n");
-            break;
-        case 12:
-            printf("\nAn error has occurred: Assignment to ""const"" or ""procedure"".\n");
-            break;
-        case 13:
-            printf("\nAn error has occurred: Assignment op expected.\n");
-            break;
-        case 14:
-            printf("\nAn error has occurred: identifier after ""call"" expected.\n");
-            break;
-        case 15:
-            printf("\nAn error has occurred: ""const"" or ""var"" call is unused.\n");
-            break;
-        case 16:
-            printf("\nAn error has occurred: ""then"" expected.\n");
-            break;
-        case 17:
-            printf("\nAn error has occurred: "";"" or }"" expected.\n");
-            break;
-        case 18:
-            printf("\nAn error has occurred: ""do"" expected.\n");
-            break;
-        case 19:
-            printf("\nAn error has occurred: invalid symbol after statement.\n");
-            break;
-        case 20:
-            printf("\nAn error has occurred: relational operator expected.\n");
-            break;
-        case 21:
-            printf("\nAn error has occurred: procedure in expression.\n");
-            break;
-        case 22:
-            printf("\nAn error has occurred: unclosed parenthesis.\n");
-            break;
-        case 23:
-            printf("\nAn error has occurred: invalid symbol following statement.\n");
-            break;
-        case 24:
-            printf("\nAn error has occurred: invalid start of expression.\n");
-            break;
-        case 25:
-            printf("\nAn error has occurred: number too large.\n");
-            break;
-        case 26:
-            printf("\nAn error has occurred: invalid filename.\n");
-            break;
-        case 27:
-            printf("\nAn error has occurred: invalid operation.\n");
-            break;
-        case 28:
-            printf("\nAn error has occurred: code too long.\n");
-            break;
-        case 29:
-            printf("\nAn error has occurred: variable indentifier too long.\n");
-            break;
-        case 30:
-            printf("\nAn error has occurred: invalid symbol.\n");
-            break;
-        case 31:
-            printf("\nOut of Memory. Exiting . . .\n");
-            break;
-        case 32:
-            printf("\nHalt has occurred.\n");
-            return;
-        case 33:
-            printf("\nAn error has occurred: Invalid use of ""else""\n");
-            return;
-        case 34:
-            printf("\nAn error has occurred: Variable expected.\n");
-            return;
-        default:
-            printf("\nAn error has occurred: ???.\n");
-        }
-    exit(n);
 }
 
 void printToScreen(int flag){

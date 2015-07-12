@@ -1,4 +1,3 @@
-//TODO: SYMBOL TABLE
 #include "header.h"
 
 //enums table
@@ -7,7 +6,7 @@ typedef enum{
 	oddsym, eqlsym, neqsym, lessym, leqsym, gtrsym, geqsym, lparentsym,
 	rparentsym, commasym, semicolonsym, periodsym, becomessym, beginsym, endsym,
 	ifsym, thensym, whilesym, dosym, callsym, constsym, varsym, procsym, writesym,
-	readsym, elsesym, errsym
+	readsym, elsesym, errsym, newlinesym
 } token;
 
 //Files
@@ -17,6 +16,8 @@ FILE *fileLexTable;
 FILE *fileLexTableList;
 
 int tokenPos = 0;
+int rows = 1;
+int collumns = 0;
 
 //Functions
 void removeComments();
@@ -25,11 +26,11 @@ void printTable();
 void printList(int flag);
 
 
-Token *scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
+void *scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
 
     fileCode = fopen(nameCode,"r");
     if(fileCode == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
     removeComments();
     printLexeme(flag);
@@ -51,14 +52,17 @@ void removeComments(){
 
     fileCleanCode = fopen(nameCleanCode,"w");
     if(fileCleanCode == NULL)
-        printError(ERROR_INVALID_FILE);
+        printError(1);
 
 
     fscanf(fileCode, "%c", &scanner);
     while (scanner != EOF){
         if(flag == 1){ //if comment ignoring is active
             scanner = fgetc(fileCode);
-            if (scanner == '*'){
+            if(scanner == 10){
+                tokenList[tokenPos++].type = newlinesym; rows++; collumns = tokenPos;
+            }
+            else if (scanner == '*'){
                 scanner = fgetc(fileCode);
                 if(scanner == '/'){
                     flag = 0;
@@ -68,24 +72,28 @@ void removeComments(){
         }
         else{
             if((int)scanner == 32 || ((int)scanner == 9)){ //space or tab
-                fprintf(fileCleanCode," ");
+                fprintf(fileCleanCode,"%c",scanner);
                 scanner = fgetc(fileCode);
             } //is space, do nothing.
             else if(((int)scanner == 10) || ((int)scanner == 59)){ //is newline or ';'
                 fprintf(fileCleanCode,"%c", scanner);
-
+                if(scanner == 10){
+                    tokenList[tokenPos++].type = newlinesym; rows++; collumns = tokenPos;
+                }
                 if(scanner == 59){
                     strcpy(tokenList[tokenPos].name, ";");
                     tokenList[tokenPos++].type = semicolonsym;
                 }
 
-                numLines++;
                 scanner = fgetc(fileCode);
                 while(((int)scanner == 10) || ((int)scanner == 59) || ((int)scanner == 32) || ((int)scanner == 9) || ((int)scanner == 3)){
                     fprintf(fileCleanCode,"%c",scanner);
                     if(scanner == 59){
                         strcpy(tokenList[tokenPos].name, ";");
                         tokenList[tokenPos++].type = semicolonsym;
+                    }
+                    if(scanner == 10){
+                        tokenList[tokenPos++].type = newlinesym; rows++; collumns = tokenPos;
                     }
                     scanner = fgetc(fileCode);
                 }
@@ -194,11 +202,14 @@ void removeComments(){
                             fprintf(fileCleanCode,":=");
                             scanner = fgetc(fileCode);
                         }
-                        else
-                            printError(ERROR_INVALID_SYM);
+                        else{
+                            printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                            printError(18);
+                        }
                         break;
                     default:
-                        printError(ERROR_INVALID_SYM);
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                        printError(18);
                 }
                 if(scanner == EOF)
                     break;
@@ -211,8 +222,10 @@ void removeComments(){
                ignore_flag = 0;
 
                 while((int)scanner <= 57 && (int)scanner >= 48){
-                    if(count >= numMax)
-                        printError(ERROR_NUM_OVERFLOW);
+                    if(count >= numMax){
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                        printError(20);
+                    }
                     scanner = fgetc(fileCode);
                     if(((int)scanner >= 58 && (int)scanner <= 62) || ((int)scanner >= 40 && (int)scanner <= 47) || ((int)scanner == 32) || ((int)scanner == 10) || ((int)scanner == 9) || ((int)scanner == 59)){//not a letter. must break!
                         ignore_flag = 1;
@@ -237,8 +250,10 @@ void removeComments(){
 
 
                 while((((int)scanner <= 57 && (int)scanner >= 48) || ((int)scanner <= 122 && (int)scanner >= 97 )) && (int)scanner > 32){
-                    if(count >= identMax)
-                        printError(ERROR_IDENT_OVERFLOW);
+                    if(count >= identMax){
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                        printError(21);
+                    }
                     if((int)scanner < 32)
                         break;
                     scanner = fgetc(fileCode);
@@ -317,8 +332,25 @@ void removeComments(){
                 if(!ignore_flag)
                     scanner = fgetc(fileCode);
             }
-            else //might be invalid symbol
-                scanner = EOF;
+            else{
+                if((int)scanner < 32)
+                    scanner = fgetc(fileCode);
+                else if(scanner == '/'){
+                    scanner = fgetc(fileCode);
+                    if(scanner == '*'){
+                        flag = 1;
+                        scanner = fgetc(fileCode);
+                    }
+                    else{
+                        printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                        printError(18);
+                    }
+                }
+                else{
+                    printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
+                    printError(18);
+                }
+            }
         }
     }
     fclose(fileCleanCode);
@@ -327,7 +359,7 @@ void removeComments(){
 void printLexeme(int flag){
     fileLexTable = fopen(nameLexTable,"w");
     if(fileLexTable == NULL)
-        printError(OUT_OF_MEMORY);
+        printError(23);
 
     printTable();
 
@@ -335,7 +367,7 @@ void printLexeme(int flag){
 
     fileLexTableList = fopen(nameLexTableList,"w");
     if(fileLexTableList == NULL)
-        printError(OUT_OF_MEMORY);
+        printError(23);
 
     printList(flag);
 
@@ -347,7 +379,9 @@ void printTable(){
 
     fprintf(fileLexTable,"lexeme      token type\n");
     for(i=0; i<tokenPos; i++){
-        fprintf(fileLexTable,"%-11s %d\n", tokenList[i].name, tokenList[i].type);
+        if(tokenList[i].type == newlinesym){}
+        else
+            fprintf(fileLexTable,"%-11s %d\n", tokenList[i].name, tokenList[i].type);
     }
 }
 
@@ -356,13 +390,16 @@ void printList(int flag){
     if(flag)
         printf("\nLexeme List:\n");
     for(i=0; i<tokenPos; i++){
-        fprintf(fileLexTableList,"%d ", tokenList[i].type);
-        if(flag)
-            printf("%d ", tokenList[i].type);
-        if(tokenList[i].type == identsym || tokenList[i].type == numbersym){
-            fprintf(fileLexTableList,"%s ", tokenList[i].name);
+        if(tokenList[i].type == newlinesym){}
+        else{
+            fprintf(fileLexTableList,"%d ", tokenList[i].type);
             if(flag)
-                printf("%s ", tokenList[i].name);
+                printf("%d ", tokenList[i].type);
+            if(tokenList[i].type == identsym || tokenList[i].type == numbersym){
+                fprintf(fileLexTableList,"%s ", tokenList[i].name);
+                if(flag)
+                    printf("%s ", tokenList[i].name);
+            }
         }
     }
     if(flag)

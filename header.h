@@ -6,7 +6,7 @@
 //User Defined (Changeable)
 #define nameMCode "mcode.txt"
 #define nameTrace "stacktrace.txt"
-#define nameCode "input.txt"
+#define nameCode "input.pl0"
 #define nameCleanCode "cleaninput.txt"
 #define nameLexTable "lexemetable.txt"
 #define nameLexTableList "lexemelist.txt"
@@ -19,46 +19,92 @@
 #define identMax 12
 #define numMax 6
 
-//ERROR_CODES
-# define ERROR_USE_EQL 1
-# define ERROR_NUM_EXPECTED 2
-# define ERROR_EQL_EXPECTED 3
-# define ERROR_MISSING_IDENT 4
-# define ERROR_MISSING_SEMICOLON_COMMA 5
-# define ERROR_SYM_EXPECTED 6
-# define ERROR_STATEMENT_EXPECTED 7
-# define ERROR_INCORRECT_SYM 8
-# define ERROR_PERIOD_EXPECTED 9
-# define ERROR_MISSING_SEMICOLON_BETWEEN_STATEMENTS 10
-# define ERROR_UNDECLARED_IDENT 11
-# define ERROR_ASSIGNMENT_TO_CONST_PROC 12
-# define ERROR_BECOMESSYM_EXPECTED 13
-# define ERROR_IDENT_EXPECTED_AFTER_CALL 14
-# define ERROR_UNUSED_CALL 15
-# define ERROR_THEN_EXPECTED 16
-# define ERROR_SEMICOLON_RBRACKET_EXPECTED 17
-# define ERROR_DO_EXPECTED 18
-# define ERROR_INVALID_SYM_AFTER_STATEMENT 19
-# define ERROR_RELATIONAL_OP_EXPECTED 20
-# define ERROR_PROCEDURE_IN_EXPRESSION 21
-# define ERROR_MISSING_RPARENT 22
-# define ERROR_INVALID_SYM_FOLLOWING 23
-# define ERROR_INVALID_EXPRESSION_START 24
-# define ERROR_NUM_OVERFLOW 25
-# define ERROR_INVALID_FILE 26
-# define ERROR_INVALID_OP 27
-# define ERROR_CODE_OVERFLOW 28
-# define ERROR_IDENT_OVERFLOW 29
-# define ERROR_INVALID_SYM 30
-# define OUT_OF_MEMORY 31
-# define HALT 32
-# define ERROR_INVALID_ELSE 33
-# define ERROR_IDENT_EXPECTED 34
-
 #ifndef GLB
 #define GLB
 
-void printError(int n);
+void printError(int n){
+    switch(n){
+        case 1:
+            printf("Invalid file input\n");
+            break;
+        case 2:
+            printf("Use ""="", not "":=""\n");
+            break;
+        case 3:
+            printf("Use "":="", not ""=""\n");
+            break;
+        case 4:
+            printf("""="" expected after const declaration\n");
+            break;
+        case 5:
+            printf("Number expected after ""="" with const\n");
+            break;
+        case 6:
+            printf("""then"" expected after ""if""\n");
+            break;
+        case 7:
+            printf("""do"" expected after ""while""\n");
+            break;
+        case 8:
+            printf("const, var, and procedure must be followed by an identifier\n");
+            break;
+        case 9:
+            printf(""":="" expected after identifier\n");
+            break;
+        case 10:
+            printf("Ident expected after ""call""\n");
+            break;
+        case 11:
+            printf("Relational operator expected\n");
+            break;
+        case 12:
+            printf("Assignment to constants and procedures not allowed\n");
+            break;
+        case 13:
+            printf("Semicolon needed between statements.\n");
+            break;
+        case 14:
+            printf("Cannot begin statement with this symbol\n");
+            break;
+        case 15:
+            printf("Undeclared variable detected\n");
+            break;
+        case 16:
+            printf("Unclosed parenthesis detected\n");
+            break;
+        case 17:
+            printf("Invalid operator\n");
+            break;
+        case 18:
+            printf("Invalid symbol\n");
+            break;
+        case 19:
+            printf(""";"" expected\n");
+            break;
+        case 20:
+            printf("Number too long\n");
+            break;
+        case 21:
+            printf("Identifier too long\n");
+            break;
+        case 22:
+            printf("Generated code too long\n");
+            break;
+        case 23:
+            printf("Compiler has run out of memory\n");
+            break;
+        case 24:
+            printf("Period expected\n");
+            break;
+        case 25:
+            printf("Var or const detected more than once\n");
+            break;
+        default:
+            printf("An error has occurred.\n");
+        }
+    exit(n);
+}
+
 int hashMe(char *name);
 
 typedef struct symbol {
