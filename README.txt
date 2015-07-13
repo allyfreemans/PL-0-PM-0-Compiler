@@ -10,7 +10,7 @@ In order to run after compiling, enter:
 	"./compile (-l) (-a) (-v)"
 Where () are optional items.
 
-Arguements allowed:
+Arguments allowed:
 -l: Print the list of lexemes/tokens to the screen
 -a: Print the generated assembly code to the screen
 -v: Print virtual machine exectution trace to the screen

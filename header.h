@@ -6,7 +6,7 @@
 //User Defined (Changeable)
 #define nameMCode "mcode.txt"
 #define nameTrace "stacktrace.txt"
-#define nameCode "input.pl0"
+#define nameCode "input.txt"
 #define nameCleanCode "cleaninput.txt"
 #define nameLexTable "lexemetable.txt"
 #define nameLexTableList "lexemelist.txt"
@@ -106,6 +106,9 @@ void printError(int n){
             break;
         case 25:
             printf("Var or const detected more than once\n");
+            break;
+        case 26:
+            printf("Ident name declared twice\n");
             break;
         default:
             printf("An error has occurred.\n");
