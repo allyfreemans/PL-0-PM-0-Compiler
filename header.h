@@ -72,7 +72,7 @@ void printError(int n){
             printf("Semicolon needed between statements.\n");
             break;
         case 14:
-            printf("Cannot begin statement with this symbol\n");
+            printf("Cannot begin new statement with this symbol\n");
             break;
         case 15:
             printf("Undeclared variable detected\n");
@@ -109,6 +109,9 @@ void printError(int n){
             break;
         case 26:
             printf("Ident name declared twice\n");
+            break;
+        case 27:
+            printf("Reached end of program, no main detected\n");
             break;
         default:
             printf("An error has occurred.\n");
