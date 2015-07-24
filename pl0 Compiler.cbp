@@ -37,7 +37,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="header.h" />
-		<Unit filename="input.pl0" />
+		<Unit filename="input.txt" />
 		<Unit filename="lexemelist.txt" />
 		<Unit filename="lexemetable.txt" />
 		<Unit filename="mcode.txt" />

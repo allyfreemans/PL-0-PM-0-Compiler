@@ -19,10 +19,13 @@ instruction IR;
 //Global Arrays
 int stack[MAX_STACK_HEIGHT];
 instruction code[MAX_CODE_LENGTH];
+procedures[MAX_LEXI_LEVELS][1];
 
 //Files
 FILE *fileCode;
 FILE *fileTrace;
+
+int add_one = 0, numCalls = 0, padding = 0;
 
 //Other
 int codeSize = 0;
@@ -86,24 +89,32 @@ void writeCode(int flag) {
 		fprintf(fileTrace,"%4d  %s  %d  %2d\n", i, OPCODE_STRINGS[code[i].OP], code[i].L, code[i].M);
 	}
 	if(flag)
-        printf("\nStack trace:\n                   pc  bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
+        printf("\nStack trace:\n                   pc   bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
 	fprintf(fileTrace,"\n\n");
 	fprintf(fileTrace,"                   pc  bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
 }
 
 void runCode(int flag, int flag2){
+    int a,c,d;
+    char b[3];
     while (BP > 0){
         if (PC < codeSize){
-            if(flag)
-                printf("%4d  %s  %d  %2d ", PC, OPCODE_STRINGS[code[PC].OP], code[PC].L, code[PC].M);
-            fprintf(fileTrace,"%4d  %s  %d  %2d ", PC, OPCODE_STRINGS[code[PC].OP], code[PC].L, code[PC].M);
+            a = PC;
+            strcpy(b,OPCODE_STRINGS[code[PC].OP]);
+            c = code[PC].L;
+            d = code[PC].M;
 
             fetch_cycle();
             execute_cycle(flag2);
 
             if(flag)
-                printf("  %2d   %d  %2d  ", PC, BP, SP);
-            fprintf(fileTrace,"  %2d   %d  %2d  ", PC, BP, SP);
+                printf("%4d  %s  %d  %2d ", a, b, c+padding, d);
+            fprintf(fileTrace,"%4d  %s  %d  %2d ", a, b, c+padding, d);
+
+            if(flag)
+                printf("  %2d  %2d  %2d  ", PC, BP, SP);
+            fprintf(fileTrace,"  %2d  %2d  %2d  ", PC, BP, SP);
+            padding = 0;
             printStack(flag);
             if(flag)
                 printf("\n");
@@ -136,13 +147,34 @@ void execute_cycle(int flag){
 			break;
 		case LOD:	//push onto stack
 			SP++;
-			stack[SP] = stack[base(IR.L, BP) + IR.M];
+			if(add_one && IR.L != 0){
+                padding = numCalls-1;
+                stack[SP] = stack[base(IR.L+numCalls-1, BP) + IR.M];
+			}
+            else
+                stack[SP] = stack[base(IR.L, BP) + IR.M];
 			break;
 		case STO:	//pop the value off of the stack and store at offset IR.M
-			stack[base(IR.L, BP) + IR.M] = stack[SP];
+			if(add_one && IR.L != 0){
+                padding = numCalls-1;
+                stack[base(IR.L+numCalls, BP) + 1 + IR.M] = stack[SP];
+			}
+            else
+                stack[base(IR.L, BP) + IR.M] = stack[SP];
 			SP--;
 			break;
 		case CAL:	//call proced. at IR.M
+		    procedures[numCalls][0] = IR.M;
+		    if(numCalls >= 1){
+                if(procedures[numCalls][0] == procedures[numCalls-1][0])
+                    add_one = 1;
+                else
+                    add_one = 0;
+		    }
+            else
+                add_one = 0;
+            //printf("call %d add one.\n",add_one);
+            numCalls++;
 		    stack[SP + 1] = 0; // return value (FV)
             stack[SP + 2] = base(IR.L, BP); // static link (SL)
             stack[SP + 3] = BP; // dynamic link (DL)
@@ -166,11 +198,11 @@ void execute_cycle(int flag){
 			break;
 		case SIO:	//perform standard IO op, depending on the instruction register
 			if(IR.M == 0){
-                printf("Write to screen: %d\n", stack[SP]);
+                printf("Write: %d\n", stack[SP]);
                 SP--;
 			}
             else if(IR.M == 1){
-                printf("\nEnter value: ");
+                printf("\nRead: ");
                 scanf("%d", &value);
                 printf("\n");
                 SP++;
@@ -194,6 +226,18 @@ void execute_cycle(int flag){
 void operate(){
 	switch (IR.M){
 		case RET:
+		    //printf("add one reset.\n");
+		    procedures[numCalls][0] = -1;
+		    numCalls--;
+		    if(numCalls >= 1){
+                if(procedures[numCalls][0] == procedures[numCalls-1][0])
+                    add_one = 1;
+                else
+                    add_one = 0;
+		    }
+            else
+                add_one = 0;
+            //printf("return %d add one.\n",add_one);
 			SP = BP - 1;
 			PC = stack[SP + 4];
 			BP = stack[SP + 3];
@@ -273,6 +317,10 @@ void printStack(int flag){
         this_BP = stack[this_BP + 2];//Advance to previous BP number
 	}
     num_BPs = i-1;
+    if(num_BPs > MAX_LEXI_LEVELS){
+        printf("\nError: :: ");
+        printError(23);
+    }
 
 	for(i = 1; i <= SP; i++) {
 		if (i == BPs[num_BPs] && i != 1) {

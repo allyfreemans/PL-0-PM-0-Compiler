@@ -111,7 +111,7 @@ void constFound(){
             printError(8); //const/int/proc must have ident after
         }
         returner = searchSym(currentToken.name, lexLevel);
-        if(returner != -1){
+        if(returner != -1 && symbolTable[returner].level == lexLevel){
             printf("\nError: Line:%d, column:%d :: ",row,column);
             printError(26); //semicolon needed between statements
         }
@@ -162,7 +162,7 @@ void varFound(){
         }
         //Test to see if it exists already
         returner = searchSym(currentToken.name, lexLevel);
-        if(returner != -1){
+        if(returner != -1 && symbolTable[returner].level == lexLevel){
             printf("\nError: Line:%d, column:%d :: ",row,column);
             printError(26); //semicolon needed between statements
         }
@@ -376,10 +376,17 @@ void expressionFound(){
     if(currentToken.type == plussym || currentToken.type == minussym){
         thisOp = currentToken.type;
 
-        if(thisOp == minussym)
+        if(thisOp == minussym){
+            fetchToken();
+            termFound();
             toCode(2,0,1);
+        }
     }
-    termFound();
+    else{
+        //fetchToken();
+        termFound();
+    }
+
 
     while(currentToken.type == plussym || currentToken.type == minussym){
         thisOp = currentToken.type;
@@ -447,7 +454,7 @@ void factorFound(){
         fetchToken();
     }
     else{
-        printf("\nError: Line:%d, column:%d :: ",row,column);
+        printf("\nError: Line:%d, column:%d :: '%s'",row,column,currentToken.name);
         printError(14); //cannot begin with this symbol
     }
 }
@@ -521,6 +528,10 @@ void procedureFound(){
 
 
     lexLevel++;
+    if(lexLevel > MAX_LEXI_LEVELS){
+        printf("\nError: :: ");
+        printError(23);
+    }
     numProcedures++;
     varNum = 0;
 
@@ -545,10 +556,13 @@ void procedureFound(){
 //find a variable in the symbol table
 int searchSym(char *name, int level){
     int i;
+    //printf("  looking for %s, level %d.\n",name,level);
     //check for locals first, then behind one, until level = 0
     while(level != -1){
         for(i=symTablePos-1; i >= 0; i--){
-            if(strcmp(name,symbolTable[i].name) == 0 && symbolTable[i].addr != -1 && symbolTable[i].level == level){
+            //printf("   level %d match %d...\n",level,i);
+            if((strcmp(name,symbolTable[i].name) == 0) && (symbolTable[i].addr != -1) && (symbolTable[i].level == level)){
+                //printf("    matched %s %d with %s %d.\n",name,level,symbolTable[i].name,symbolTable[i].level);
                 return i;
             }
         }
@@ -578,6 +592,7 @@ void pushSymTable(int kind, Token t, int L, int M, int num){
         symbolTable[symTablePos].val = num;
     else if (kind == 2)
         currentM++;
+    printf("pushing %s, level %d.\n",symbolTable[symTablePos].name,symbolTable[symTablePos].level);
     symTablePos++;
 }
 

@@ -1,33 +1,15 @@
-var w,x;
-const y = 7;
-
-
+var f, n;
+procedure fact;
+ var ans1;
+ begin
+ ans1 := n;
+ n:= n-1;
+ if n = 0 then f := 1;
+ if n > 0 then call fact;
+ f := f * ans1;
+ end;
 begin
-	x := 4;
-	read w;
-	
-	
-	if odd w then
-		begin
-			w := w + 1;
-			w := w + 1;
-		end;
-	if x > y then w := w + 1;
-	
-	
-	
-	x := 1;
-	while x < 9 do
-	begin
-		x := x + 1;
-		x := x - 1;
-		x := x + 2;
-	end;
-	x := 1;
-	while x < 9 do x := x + 1;
-	
-	
-	write w; 
-	write x;
-	
+ n := 3;
+ call fact;
+ write f;
 end.
