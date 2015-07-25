@@ -37,7 +37,6 @@ void removeComments(){
     char varHolder[identMax];
     int counter = 0;
 
-
     char scanner;
     int flag = 0;
     int ignore_flag = 0;
@@ -111,8 +110,7 @@ void removeComments(){
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
-                    case '/' :
-                        //might be a comment, stay tuned
+                    case '/' : //might be a comment, stay tuned
                         scanner = fgetc(fileCode);
                         if(scanner == '*')
                             flag = 1;

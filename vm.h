@@ -169,7 +169,6 @@ void execute_cycle(int flag){
                 add_one = 1;
             else
                 add_one = 0;
-            //printf("call %d add one.\n",add_one);
             numCalls++;
 		    stack[SP + 1] = 0; // return value (FV)
             stack[SP + 2] = base(IR.L, BP); // static link (SL)
@@ -233,7 +232,6 @@ void operate(){
 		    }
             else
                 add_one = 0;
-            //printf("return %d add one.\n",add_one);
 			SP = BP - 1;
 			PC = stack[SP + 4];
 			BP = stack[SP + 3];
@@ -339,11 +337,9 @@ void printToScreen(int flag){
     if(flag){
         run = strcmp("pc",scanned);
         while(run != 0){
-            //printf("%s ", scanned);
             fscanf(fileTrace,"%s",scanned);
             run = strcmp("pc",scanned);
         }
-        //system("pause");
         fscanf(fileTrace,"%s",scanned); //"bp"
         fscanf(fileTrace,"%s",scanned); // "sp"
         fscanf(fileTrace,"%s",scanned); // "stack"

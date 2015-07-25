@@ -227,7 +227,7 @@ void statementFound(){
         symPos = searchSym(currentToken.name, lexLevel);
 
 //        if(strcmp(currentToken.name,currentProc) == 0)
-//            printf("\n%s is a recursive procedure.\n All CAL L %d are now marked as recursive.\n They expect to be at level %d.\n", currentToken.name, symbolTable[symPos].addr, lexLevel);
+//            printf("\n%s is a recursive procedure.\n All CAL L %d are now marked as recursive.\n They expect to be at level %d.\n", currentToken.name,symbolTable[symPos].addr,lexLevel);
 //        else
 //            printf("\n%s is not recursive, CAL L %d expect level %d.\n",currentToken.name,symbolTable[symPos].addr,lexLevel);
 
