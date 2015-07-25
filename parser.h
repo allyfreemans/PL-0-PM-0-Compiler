@@ -17,6 +17,7 @@ int column = 0, row = 1;
 int counted = 0, numProcedures = 0;
 int varLevel = 0, constLevel = 0;
 int varNum = 0, constNum = 0;
+char currentProc[identMax];
 
 //Procedures
 void analyze();
@@ -44,7 +45,7 @@ void parser(int flag){
         printError(1);
 
     analyze();
-    printf("\nNo errors, program is syntactically correct.\n\n");
+    printf("\n=============================================\nNo errors, program is syntactically correct.\n=============================================\n\n");
     toFile();
     fclose(fileMCode);
     printMCode(flag);
@@ -86,7 +87,8 @@ void runBlock(){
     toCode(6,0,temPos + 4);
     statementFound();
     if(currentToken.type != periodsym && currentToken.type == semicolonsym){
-        toCode(2,0,0); //return proc???
+        toCode(2,0,0); //return proc
+        voidSyms(lexLevel);
     }
     else
         toCode(9,0,2);
@@ -230,6 +232,12 @@ void statementFound(){
 
         symPos = searchSym(currentToken.name, lexLevel);
 
+//        if(strcmp(currentToken.name,currentProc) == 0)
+//            printf("\n%s is a recursive procedure.\n All CAL L %d are now marked as recursive.\n They expect to be at level %d.\n",currentToken.name,symbolTable[symPos].addr,lexLevel);
+//        else
+//            printf("\n%s is not recursive, CAL L %d expect level %d.\n",currentToken.name,symbolTable[symPos].addr,lexLevel);
+
+
         if(symPos == -1){
             printf("\nError: Line:%d, column:%d :: ",row,column);
             printf("Identifier '%s': ", currentToken.name);
@@ -260,9 +268,7 @@ void statementFound(){
         }
 
         fetchToken();
-        lexLevel++; //!?
         voidSyms(lexLevel);
-        lexLevel--; //!?
     }
     else if(currentToken.type == ifsym){
         fetchToken();
@@ -519,6 +525,7 @@ void procedureFound(){
         printf("\nError: Line:%d, column:%d :: ",row,column);
         printError(8); //const/int/proc must have ident after
     }
+    strcpy(currentProc,currentToken.name);
 
     if(numProcedures == 1){
         pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
@@ -549,7 +556,7 @@ void procedureFound(){
         printf("\nError: Line:%d, column:%d :: ",row,column);
         printError(13); //semicolon needed between statements
     }
-
+    strcpy(currentProc," ");
     fetchToken();
 }
 
@@ -592,7 +599,7 @@ void pushSymTable(int kind, Token t, int L, int M, int num){
         symbolTable[symTablePos].val = num;
     else if (kind == 2)
         currentM++;
-    printf("pushing %s, level %d.\n",symbolTable[symTablePos].name,symbolTable[symTablePos].level);
+    //printf("pushing %s, level %d.\n",symbolTable[symTablePos].name,symbolTable[symTablePos].level);
     symTablePos++;
 }
 
@@ -618,7 +625,7 @@ void printMCode(int flag){
     if(fileMCode == NULL)
         printError(1);
     if(flag){
-        printf("Generated Machine Code:\n");
+        printf("========================\nGenerated Machine Code\n========================\n");
         c = fgetc(fileMCode);
         while(c != EOF){
             printf("%c",c);

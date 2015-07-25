@@ -10,7 +10,7 @@ procedure fact;
 	end;
 	
 begin
-	read n;
+	n:=2;
 	call fact;
 	write f;
 end.

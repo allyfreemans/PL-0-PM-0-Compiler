@@ -19,7 +19,10 @@ void printList(int flag);
 
 void scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
 
-    fileCode = fopen(nameCode,"r");
+    if(strcmp(inputFileName,"empty") != 0)
+        fileCode = fopen(inputFileName,"r");
+    else
+        fileCode = fopen(nameCode,"r");
     if(fileCode == NULL)
         printError(1);
 
@@ -377,7 +380,7 @@ void printTable(){
 void printList(int flag){
     int i;
     if(flag)
-        printf("\nLexeme List:\n");
+        printf("\n==============\nLexeme List:\n==============\n");
     for(i=0; i<tokenPos; i++){
         if(tokenList[i].type == newlinesym){}
         else{

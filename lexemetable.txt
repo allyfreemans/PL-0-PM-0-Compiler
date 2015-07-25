@@ -47,9 +47,8 @@ ans1        2
 end         22
 ;           18
 begin       21
+read        32
 n           2
-:=          20
-3           3
 ;           18
 call        27
 fact        2

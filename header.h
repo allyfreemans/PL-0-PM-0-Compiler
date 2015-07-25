@@ -15,12 +15,14 @@
 #define MAX_STACK_HEIGHT 2000
 #define MAX_SYMBOL_TABLE_SIZE 2000
 #define MAX_CODE_LENGTH 2000
-#define MAX_LEXI_LEVELS 3
+#define MAX_LEXI_LEVELS 100
 #define identMax 12
 #define numMax 6
 
 #ifndef GLB
 #define GLB
+
+char inputFileName[999];
 
 typedef enum{
 	nulsym = 1, identsym, numbersym, plussym, minussym, multsym, slashsym,

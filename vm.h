@@ -19,13 +19,13 @@ instruction IR;
 //Global Arrays
 int stack[MAX_STACK_HEIGHT];
 instruction code[MAX_CODE_LENGTH];
-procedures[MAX_LEXI_LEVELS][1];
+int procedures[MAX_LEXI_LEVELS][1];
 
 //Files
 FILE *fileCode;
 FILE *fileTrace;
 
-int add_one = 0, numCalls = 0, padding = 0;
+int add_one = 0, numCalls = 0, padding = 0, baseLex = 0;
 
 //Other
 int codeSize = 0;
@@ -165,12 +165,8 @@ void execute_cycle(int flag){
 			break;
 		case CAL:	//call proced. at IR.M
 		    procedures[numCalls][0] = IR.M;
-		    if(numCalls >= 1){
-                if(procedures[numCalls][0] == procedures[numCalls-1][0])
-                    add_one = 1;
-                else
-                    add_one = 0;
-		    }
+            if(procedures[numCalls][0] == procedures[numCalls-1][0])
+                add_one = 1;
             else
                 add_one = 0;
             //printf("call %d add one.\n",add_one);
@@ -198,13 +194,13 @@ void execute_cycle(int flag){
 			break;
 		case SIO:	//perform standard IO op, depending on the instruction register
 			if(IR.M == 0){
-                printf("Write: %d\n", stack[SP]);
+                printf("=====================\nWrite: %d\n=====================\n", stack[SP]);
                 SP--;
 			}
             else if(IR.M == 1){
-                printf("\nRead: ");
+                printf("=====================\nRead: ");
                 scanf("%d", &value);
-                printf("\n");
+                printf("=====================\n\n");
                 SP++;
                 stack[SP] = value;
             }
@@ -339,7 +335,7 @@ void printToScreen(int flag){
     char scanned[99], c;
     int run = 1;
     fileTrace = fopen(nameTrace, "r");
-    //printf("\nwelcome.\n");
+    printf("\n=============================================\nStack Trace:\n=============================================\n");
     if(flag){
         run = strcmp("pc",scanned);
         while(run != 0){
@@ -347,7 +343,6 @@ void printToScreen(int flag){
             fscanf(fileTrace,"%s",scanned);
             run = strcmp("pc",scanned);
         }
-        printf("\n");
         //system("pause");
         fscanf(fileTrace,"%s",scanned); //"bp"
         fscanf(fileTrace,"%s",scanned); // "sp"
