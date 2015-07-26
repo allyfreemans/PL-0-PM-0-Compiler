@@ -39,6 +39,7 @@ void toFile();
 
 //Run the main section
 void parser(int flag){
+    int i;
 
     fileMCode = fopen(nameMCode,"w");
     if(fileMCode == NULL)
@@ -46,6 +47,11 @@ void parser(int flag){
 
     analyze();
     printf("\n=============================================\nNo errors, program is syntactically correct.\n=============================================\n\n");
+    printf("\n=============================================\nSymbol Table: kind name L M val\n=============================================\n\n");
+    for(i=0; i<symTablePos;i++){
+        printf("%d %s %d %d %d\n",symbolTable[i].kind,symbolTable[i].name,symbolTable[i].level,symbolTable[i].addr,symbolTable[i].val);
+    }
+    printf("\n");
     toFile();
     fclose(fileMCode);
     printMCode(flag);
@@ -129,7 +135,7 @@ void constFound(){
             printError(5); //number wanted after equals in const
         }
 
-        pushSymTable(1, tempT, lexLevel, -5, toInt(currentToken.name));
+        pushSymTable(1, tempT, constLevel, -5, toInt(currentToken.name));
         fetchToken();
     } while(currentToken.type == commasym);
 
@@ -226,12 +232,6 @@ void statementFound(){
 
         symPos = searchSym(currentToken.name, lexLevel);
 
-//        if(strcmp(currentToken.name,currentProc) == 0)
-//            printf("\n%s is a recursive procedure.\n All CAL L %d are now marked as recursive.\n They expect to be at level %d.\n", currentToken.name, symbolTable[symPos].addr, lexLevel);
-//        else
-//            printf("\n%s is not recursive, CAL L %d expect level %d.\n",currentToken.name,symbolTable[symPos].addr,lexLevel);
-
-
         if(symPos == -1){
             printf("\nError: Line:%d, column:%d :: ",row,column);
             printf("Identifier '%s': ", currentToken.name);
@@ -261,7 +261,6 @@ void statementFound(){
         }
 
         fetchToken();
-        voidSyms(lexLevel);
     }
     else if(currentToken.type == ifsym){
         fetchToken();
@@ -356,8 +355,10 @@ void statementFound(){
                 printError(15); //undeclared variable found
             }
             fetchToken();
-
-            toCode(3,0,symbolTable[symPos].addr); //read from screen
+            if(symbolTable[symPos].kind == 1)
+                toCode(1,0,symbolTable[symPos].val); //if constant
+            else
+                toCode(3,0,symbolTable[symPos].addr); //read from screen
 
             toCode(9,0,0); //output
         }
@@ -513,12 +514,7 @@ void procedureFound(){
     }
     strcpy(currentProc,currentToken.name);
 
-    if(numProcedures == 1){
-        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
-    }
-    else
-        pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
-
+    pushSymTable(3, currentToken, lexLevel, MCodePos, -1);
 
     lexLevel++;
     if(lexLevel > MAX_LEXI_LEVELS){
@@ -562,7 +558,7 @@ int searchSym(char *name, int level){
 void voidSyms(int level){
     int i;
     for(i=symTablePos-1; i >= 0; i--){
-        if(symbolTable[i].level == level && symbolTable[i].kind != 3){
+        if(symbolTable[i].level == level && symbolTable[i].kind != 3 && symbolTable[i].addr != -1){
             symbolTable[i].addr = -1;
         }
     }
@@ -577,6 +573,11 @@ void pushSymTable(int kind, Token t, int L, int M, int num){
         symbolTable[symTablePos].val = num;
     else if (kind == 2)
         currentM++;
+    else if (kind == 3){
+        procedures[procPos][0] = M;
+        procedures[procPos][1] = L+1;
+        procPos++;
+    }
     symTablePos++;
 }
 //Fetches the next token to use

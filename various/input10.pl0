@@ -1,0 +1,12 @@
+/* write x (should output 64) */ 
+
+var x, y;                                
+begin
+  x := 1;
+  y := 8;
+  x := y + 56;
+  write x;
+end.
+
+
+

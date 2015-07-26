@@ -1,0 +1,12 @@
+/* Integer square-root function: floor(sqrt(input)). */
+var n, input, output;
+
+begin 
+   n := 0;
+   read input;
+   while n *n <= input do n := n +1;
+
+   if n * n > input then n := n -1;
+ 
+   write n;
+end.

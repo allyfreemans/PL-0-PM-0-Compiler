@@ -23,6 +23,8 @@
 #define GLB
 
 char inputFileName[999];
+int procedures[999][2]; //0=CAL line, 1=level
+int procPos = 0;
 
 typedef enum{
 	nulsym = 1, identsym, numbersym, plussym, minussym, multsym, slashsym,
@@ -77,7 +79,7 @@ void printError(int n){
             printf("Cannot begin new statement with this symbol\n");
             break;
         case 15:
-            printf("Undeclared variable detected\n");
+            printf("Undeclared identifier detected\n");
             break;
         case 16:
             printf("Unclosed parenthesis detected\n");

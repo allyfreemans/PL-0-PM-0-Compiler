@@ -1,0 +1,14 @@
+/* multiply 3 numbers and output the result */
+var x, y, z, result; 
+
+begin 
+
+  read x;
+  read y;
+  read z;
+
+  result :=  (x * y * z);
+
+  write result;
+
+end.

@@ -35,7 +35,7 @@ void removeComments(){
 
     char numHolder[numMax];
     char varHolder[identMax];
-    int counter = 0;
+    int counter = 0, temp = 0;
 
     char scanner;
     int flag = 0;
@@ -278,6 +278,13 @@ void removeComments(){
                     tokenList[tokenPos++].type = dosym;
                 }
                 else if (strcmp(varHolder, "else") == 0){
+                    temp = 1;
+                    while(tokenList[tokenPos-temp].type == newlinesym)
+                        temp++;
+                    if(tokenList[tokenPos-temp].type != semicolonsym){
+                        strcpy(tokenList[tokenPos].name, ";");
+                        tokenList[tokenPos++].type = semicolonsym;
+                    }
                     strcpy(tokenList[tokenPos].name, "else");
                     tokenList[tokenPos++].type = elsesym;
                 }

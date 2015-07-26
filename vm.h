@@ -19,7 +19,6 @@ instruction IR;
 //Global Arrays
 int stack[MAX_STACK_HEIGHT];
 instruction code[MAX_CODE_LENGTH];
-int procedures[MAX_LEXI_LEVELS][1];
 
 //Files
 FILE *fileCode;
@@ -29,6 +28,8 @@ int add_one = 0, numCalls = 0, padding = 0, baseLex = 0;
 
 //Other
 int codeSize = 0;
+int additons[999];
+int addPos = 0;
 
 //Functions
 void loadFile();
@@ -42,6 +43,7 @@ void printStack();
 void printToScreen(int flag);
 
 void vm(int flag){
+    int i;
     stack[1] = 0;
     stack[2] = 0;
     stack[3] = 0;
@@ -84,14 +86,12 @@ void loadFile(){
 
 void writeCode(int flag) {
 	int i;
-	fprintf(fileTrace,"Line  OP   L  M\n");
+	fprintf(fileTrace,"Line OP   L   M\n");
 	for(i = 0; i < codeSize; i++){
-		fprintf(fileTrace,"%4d  %s  %d  %2d\n", i, OPCODE_STRINGS[code[i].OP], code[i].L, code[i].M);
+		fprintf(fileTrace," %3d %s %2d %3d\n", i, OPCODE_STRINGS[code[i].OP], code[i].L, code[i].M);
 	}
-	if(flag)
-        printf("\nStack trace:\n                   pc   bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
 	fprintf(fileTrace,"\n\n");
-	fprintf(fileTrace,"                   pc  bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
+	fprintf(fileTrace,"                pc  bp  sp  stack\nInitial values  %2d   %d  %2d\n", PC, BP, SP);
 }
 
 void runCode(int flag, int flag2){
@@ -108,13 +108,12 @@ void runCode(int flag, int flag2){
             execute_cycle(flag2);
 
             if(flag)
-                printf("%4d  %s  %d  %2d ", a, b, c+padding, d);
-            fprintf(fileTrace,"%4d  %s  %d  %2d ", a, b, c+padding, d);
+                printf("%3d %s %2d %3d ", a, b, c+padding, d);
+            fprintf(fileTrace,"%3d %s %2d %3d ", a, b, c+padding, d);
 
             if(flag)
-                printf("  %2d  %2d  %2d  ", PC, BP, SP);
-            fprintf(fileTrace,"  %2d  %2d  %2d  ", PC, BP, SP);
-            padding = 0;
+                printf("%3d %3d %3d  ", PC, BP, SP);
+            fprintf(fileTrace,"%3d %3d %3d  ", PC, BP, SP);
             printStack(flag);
             if(flag)
                 printf("\n");
@@ -134,7 +133,7 @@ void fetch_cycle(){
 }
 
 void execute_cycle(int flag){
-    int value = 0;
+    int value = 0, i = 0;
 	switch (IR.OP) {
 		case FCH:	//Fetch, not really used here
 			break;
@@ -147,29 +146,35 @@ void execute_cycle(int flag){
 			break;
 		case LOD:	//push onto stack
 			SP++;
-			if(add_one && IR.L != 0){
-                padding = numCalls-1;
-                stack[SP] = stack[base(IR.L+numCalls-1, BP) + IR.M];
-			}
+			if(IR.L != 0)
+                stack[SP] = stack[base(IR.L+padding, BP) + IR.M];
             else
-                stack[SP] = stack[base(IR.L, BP) + IR.M];
+                stack[SP] = stack[base(IR.L+0, BP) + IR.M];
 			break;
 		case STO:	//pop the value off of the stack and store at offset IR.M
-			if(add_one && IR.L != 0){
-                padding = numCalls-1;
-                stack[base(IR.L+numCalls, BP) + 1 + IR.M] = stack[SP];
-			}
+		    if(IR.L != 0)
+                stack[base(IR.L+padding, BP) + IR.M] = stack[SP];
             else
-                stack[base(IR.L, BP) + IR.M] = stack[SP];
+                stack[base(IR.L+0, BP) + IR.M] = stack[SP];
 			SP--;
 			break;
 		case CAL:	//call proced. at IR.M
-		    procedures[numCalls][0] = IR.M;
-            if(procedures[numCalls][0] == procedures[numCalls-1][0])
-                add_one = 1;
+		    numCalls++;
+		    while(i < procPos){
+                if(procedures[i][0] == IR.M){
+                    i = procedures[i][1];
+                    break;
+                }
+                else
+                    i++;
+		    } //Returns expected lexical level
+            if(numCalls != i){
+                padding = numCalls-i;
+                additons[addPos++] = padding;
+                //printf("CAL L %2d wants +%d levels.\n",IR.M,padding);
+            }
             else
-                add_one = 0;
-            numCalls++;
+                padding = 0;
 		    stack[SP + 1] = 0; // return value (FV)
             stack[SP + 2] = base(IR.L, BP); // static link (SL)
             stack[SP + 3] = BP; // dynamic link (DL)
@@ -219,19 +224,15 @@ void execute_cycle(int flag){
 }
 
 void operate(){
+    int i = 0;
 	switch (IR.M){
 		case RET:
-		    //printf("add one reset.\n");
-		    procedures[numCalls][0] = -1;
 		    numCalls--;
-		    if(numCalls >= 1){
-                if(procedures[numCalls][0] == procedures[numCalls-1][0])
-                    add_one = 1;
-                else
-                    add_one = 0;
-		    }
-            else
-                add_one = 0;
+		    if(numCalls == 0){}//do nothing, you're in main
+		    else
+                padding = additons[addPos]-1;
+		    if(padding < 0)
+                padding = 0;
 			SP = BP - 1;
 			PC = stack[SP + 4];
 			BP = stack[SP + 3];
@@ -343,7 +344,7 @@ void printToScreen(int flag){
         fscanf(fileTrace,"%s",scanned); //"bp"
         fscanf(fileTrace,"%s",scanned); // "sp"
         fscanf(fileTrace,"%s",scanned); // "stack"
-        printf("                   pc  bp  sp  stack");
+        printf("                pc  bp  sp  stack");
         while(c != EOF){
             c = fgetc(fileTrace);
             printf("%c", c);
