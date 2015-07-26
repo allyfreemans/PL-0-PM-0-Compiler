@@ -24,8 +24,12 @@ instruction code[MAX_CODE_LENGTH];
 FILE *fileCode;
 FILE *fileTrace;
 
+int add_one = 0, numCalls = 0, padding = 0, baseLex = 0;
+
 //Other
 int codeSize = 0;
+int additons[999];
+int addPos = 0;
 
 //Functions
 void loadFile();
@@ -39,6 +43,7 @@ void printStack();
 void printToScreen(int flag);
 
 void vm(int flag){
+    int i;
     stack[1] = 0;
     stack[2] = 0;
     stack[3] = 0;
@@ -81,29 +86,34 @@ void loadFile(){
 
 void writeCode(int flag) {
 	int i;
-	fprintf(fileTrace,"Line  OP   L  M\n");
+	fprintf(fileTrace,"Line OP   L   M\n");
 	for(i = 0; i < codeSize; i++){
-		fprintf(fileTrace,"%4d  %s  %d  %2d\n", i, OPCODE_STRINGS[code[i].OP], code[i].L, code[i].M);
+		fprintf(fileTrace," %3d %s %2d %3d\n", i, OPCODE_STRINGS[code[i].OP], code[i].L, code[i].M);
 	}
-	if(flag)
-        printf("\nStack trace:\n                   pc  bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
 	fprintf(fileTrace,"\n\n");
-	fprintf(fileTrace,"                   pc  bp  sp  stack\nInitial values     %2d   %d  %2d\n", PC, BP, SP);
+	fprintf(fileTrace,"                pc  bp  sp  stack\nInitial values  %2d   %d  %2d\n", PC, BP, SP);
 }
 
 void runCode(int flag, int flag2){
+    int a,c,d;
+    char b[3];
     while (BP > 0){
         if (PC < codeSize){
-            if(flag)
-                printf("%4d  %s  %d  %2d ", PC, OPCODE_STRINGS[code[PC].OP], code[PC].L, code[PC].M);
-            fprintf(fileTrace,"%4d  %s  %d  %2d ", PC, OPCODE_STRINGS[code[PC].OP], code[PC].L, code[PC].M);
+            a = PC;
+            strcpy(b,OPCODE_STRINGS[code[PC].OP]);
+            c = code[PC].L;
+            d = code[PC].M;
 
             fetch_cycle();
             execute_cycle(flag2);
 
             if(flag)
-                printf("  %2d   %d  %2d  ", PC, BP, SP);
-            fprintf(fileTrace,"  %2d   %d  %2d  ", PC, BP, SP);
+                printf("%3d %s %2d %3d ", a, b, c+padding, d);
+            fprintf(fileTrace,"%3d %s %2d %3d ", a, b, c+padding, d);
+
+            if(flag)
+                printf("%3d %3d %3d  ", PC, BP, SP);
+            fprintf(fileTrace,"%3d %3d %3d  ", PC, BP, SP);
             printStack(flag);
             if(flag)
                 printf("\n");
@@ -123,7 +133,7 @@ void fetch_cycle(){
 }
 
 void execute_cycle(int flag){
-    int value = 0;
+    int value = 0, i = 0;
 	switch (IR.OP) {
 		case FCH:	//Fetch, not really used here
 			break;
@@ -136,13 +146,35 @@ void execute_cycle(int flag){
 			break;
 		case LOD:	//push onto stack
 			SP++;
-			stack[SP] = stack[base(IR.L, BP) + IR.M];
+			if(IR.L != 0)
+                stack[SP] = stack[base(IR.L+padding, BP) + IR.M];
+            else
+                stack[SP] = stack[base(IR.L+0, BP) + IR.M];
 			break;
 		case STO:	//pop the value off of the stack and store at offset IR.M
-			stack[base(IR.L, BP) + IR.M] = stack[SP];
+		    if(IR.L != 0)
+                stack[base(IR.L+padding, BP) + IR.M] = stack[SP];
+            else
+                stack[base(IR.L+0, BP) + IR.M] = stack[SP];
 			SP--;
 			break;
 		case CAL:	//call proced. at IR.M
+		    numCalls++;
+		    while(i < procPos){
+                if(procedures[i][0] == IR.M){
+                    i = procedures[i][1];
+                    break;
+                }
+                else
+                    i++;
+		    } //Returns expected lexical level
+            if(numCalls != i){
+                padding = numCalls-i;
+                additons[addPos++] = padding;
+                //printf("CAL L %2d wants +%d levels.\n",IR.M,padding);
+            }
+            else
+                padding = 0;
 		    stack[SP + 1] = 0; // return value (FV)
             stack[SP + 2] = base(IR.L, BP); // static link (SL)
             stack[SP + 3] = BP; // dynamic link (DL)
@@ -166,13 +198,13 @@ void execute_cycle(int flag){
 			break;
 		case SIO:	//perform standard IO op, depending on the instruction register
 			if(IR.M == 0){
-                printf("Write to screen: %d\n", stack[SP]);
+                printf("=====================\nWrite: %d\n=====================\n", stack[SP]);
                 SP--;
 			}
             else if(IR.M == 1){
-                printf("\nEnter value: ");
+                printf("=====================\nRead: ");
                 scanf("%d", &value);
-                printf("\n");
+                printf("=====================\n\n");
                 SP++;
                 stack[SP] = value;
             }
@@ -192,8 +224,15 @@ void execute_cycle(int flag){
 }
 
 void operate(){
+    int i = 0;
 	switch (IR.M){
 		case RET:
+		    numCalls--;
+		    if(numCalls == 0){}//do nothing, you're in main
+		    else
+                padding = additons[addPos]-1;
+		    if(padding < 0)
+                padding = 0;
 			SP = BP - 1;
 			PC = stack[SP + 4];
 			BP = stack[SP + 3];
@@ -273,6 +312,10 @@ void printStack(int flag){
         this_BP = stack[this_BP + 2];//Advance to previous BP number
 	}
     num_BPs = i-1;
+    if(num_BPs > MAX_LEXI_LEVELS){
+        printf("\nError: :: ");
+        printError(23);
+    }
 
 	for(i = 1; i <= SP; i++) {
 		if (i == BPs[num_BPs] && i != 1) {
@@ -291,20 +334,17 @@ void printToScreen(int flag){
     char scanned[99], c;
     int run = 1;
     fileTrace = fopen(nameTrace, "r");
-    //printf("\nwelcome.\n");
+    printf("\n=============================================\nStack Trace:\n=============================================\n");
     if(flag){
         run = strcmp("pc",scanned);
         while(run != 0){
-            //printf("%s ", scanned);
             fscanf(fileTrace,"%s",scanned);
             run = strcmp("pc",scanned);
         }
-        printf("\n");
-        //system("pause");
         fscanf(fileTrace,"%s",scanned); //"bp"
         fscanf(fileTrace,"%s",scanned); // "sp"
         fscanf(fileTrace,"%s",scanned); // "stack"
-        printf("                   pc  bp  sp  stack");
+        printf("                pc  bp  sp  stack");
         while(c != EOF){
             c = fgetc(fileTrace);
             printf("%c", c);

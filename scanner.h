@@ -1,14 +1,5 @@
 #include "header.h"
 
-//enums table
-typedef enum{
-	nulsym = 1, identsym, numbersym, plussym, minussym, multsym, slashsym,
-	oddsym, eqlsym, neqsym, lessym, leqsym, gtrsym, geqsym, lparentsym,
-	rparentsym, commasym, semicolonsym, periodsym, becomessym, beginsym, endsym,
-	ifsym, thensym, whilesym, dosym, callsym, constsym, varsym, procsym, writesym,
-	readsym, elsesym, errsym, newlinesym
-} token;
-
 //Files
 FILE *fileCode;
 FILE *fileCleanCode;
@@ -26,15 +17,17 @@ void printTable();
 void printList(int flag);
 
 
-void *scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
+void scanner(int flag){ //if flag is true (-l) print list of lexemes to screen
 
-    fileCode = fopen(nameCode,"r");
+    if(strcmp(inputFileName,"empty") != 0)
+        fileCode = fopen(inputFileName,"r");
+    else
+        fileCode = fopen(nameCode,"r");
     if(fileCode == NULL)
         printError(1);
 
     removeComments();
     printLexeme(flag);
-    //printf("closing\n");
     fclose(fileCode);
 }
 
@@ -42,9 +35,7 @@ void removeComments(){
 
     char numHolder[numMax];
     char varHolder[identMax];
-    int numLines = 0;
-    int count = 0;
-
+    int counter = 0, temp = 0;
 
     char scanner;
     int flag = 0;
@@ -119,8 +110,7 @@ void removeComments(){
                         fprintf(fileCleanCode,"%c", scanner);
                         scanner = fgetc(fileCode);
                         break;
-                    case '/' :
-                        //might be a comment, stay tuned
+                    case '/' : //might be a comment, stay tuned
                         scanner = fgetc(fileCode);
                         if(scanner == '*')
                             flag = 1;
@@ -218,11 +208,11 @@ void removeComments(){
             else if ((int)scanner <= 57 && (int)scanner >= 48){ //CASE: is a number
                numHolder[0] = '\0';
                numHolder[0] = scanner;
-               count = 1;
+               counter = 1;
                ignore_flag = 0;
 
                 while((int)scanner <= 57 && (int)scanner >= 48){
-                    if(count >= numMax){
+                    if(counter >= numMax){
                         printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
                         printError(20);
                     }
@@ -231,9 +221,9 @@ void removeComments(){
                         ignore_flag = 1;
                     }
                     if(!ignore_flag)
-                        numHolder[count++] = scanner;
+                        numHolder[counter++] = scanner;
                 }
-                numHolder[count] = '\0';
+                numHolder[counter] = '\0';
                 strcpy(tokenList[tokenPos].name,numHolder);
                 tokenList[tokenPos++].type = numbersym;
                 fprintf(fileCleanCode,"%s", numHolder);
@@ -245,12 +235,12 @@ void removeComments(){
             else if ((int)scanner <= 122 && (int)scanner >= 97){ //CASE: is a letter (lowercase only)
                 varHolder[0] = '\0';
                 varHolder[0] = scanner;
-                count = 1;
+                counter = 1;
                 ignore_flag = 0;
 
 
                 while((((int)scanner <= 57 && (int)scanner >= 48) || ((int)scanner <= 122 && (int)scanner >= 97 )) && (int)scanner > 32){
-                    if(count >= identMax){
+                    if(counter >= identMax){
                         printf("\nError: Line:%d, Collumn:%d :: ",rows,tokenPos-collumns+1);
                         printError(21);
                     }
@@ -261,11 +251,11 @@ void removeComments(){
                         ignore_flag = 1;
                     }
                     if(!ignore_flag)
-                        varHolder[count++] = scanner;
+                        varHolder[counter++] = scanner;
                 }
-                varHolder[count] = '\0';
-                if((int)varHolder[count-1] < 32)
-                    varHolder[count-1] = '\0';
+                varHolder[counter] = '\0';
+                if((int)varHolder[counter-1] < 32)
+                    varHolder[counter-1] = '\0';
                 //figure out if you have a reserved name
                 if (strcmp(varHolder, "begin") == 0){
                     strcpy(tokenList[tokenPos].name, "begin");
@@ -288,6 +278,13 @@ void removeComments(){
                     tokenList[tokenPos++].type = dosym;
                 }
                 else if (strcmp(varHolder, "else") == 0){
+                    temp = 1;
+                    while(tokenList[tokenPos-temp].type == newlinesym)
+                        temp++;
+                    if(tokenList[tokenPos-temp].type != semicolonsym){
+                        strcpy(tokenList[tokenPos].name, ";");
+                        tokenList[tokenPos++].type = semicolonsym;
+                    }
                     strcpy(tokenList[tokenPos].name, "else");
                     tokenList[tokenPos++].type = elsesym;
                 }
@@ -388,7 +385,7 @@ void printTable(){
 void printList(int flag){
     int i;
     if(flag)
-        printf("\nLexeme List:\n");
+        printf("\n==============\nLexeme List:\n==============\n");
     for(i=0; i<tokenPos; i++){
         if(tokenList[i].type == newlinesym){}
         else{

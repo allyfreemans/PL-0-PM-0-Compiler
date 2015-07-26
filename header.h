@@ -6,7 +6,7 @@
 //User Defined (Changeable)
 #define nameMCode "mcode.txt"
 #define nameTrace "stacktrace.txt"
-#define nameCode "input.pl0"
+#define nameCode "input.txt"
 #define nameCleanCode "cleaninput.txt"
 #define nameLexTable "lexemetable.txt"
 #define nameLexTableList "lexemelist.txt"
@@ -15,12 +15,24 @@
 #define MAX_STACK_HEIGHT 2000
 #define MAX_SYMBOL_TABLE_SIZE 2000
 #define MAX_CODE_LENGTH 2000
-#define MAX_LEXI_LEVELS 3
+#define MAX_LEXI_LEVELS 100
 #define identMax 12
 #define numMax 6
 
 #ifndef GLB
 #define GLB
+
+char inputFileName[999];
+int procedures[999][2]; //0=CAL line, 1=level
+int procPos = 0;
+
+typedef enum{
+	nulsym = 1, identsym, numbersym, plussym, minussym, multsym, slashsym,
+	oddsym, eqlsym, neqsym, lessym, leqsym, gtrsym, geqsym, lparentsym,
+	rparentsym, commasym, semicolonsym, periodsym, becomessym, beginsym, endsym,
+	ifsym, thensym, whilesym, dosym, callsym, constsym, varsym, procsym, writesym,
+	readsym, elsesym, errsym, newlinesym
+} token;
 
 void printError(int n){
     switch(n){
@@ -64,10 +76,10 @@ void printError(int n){
             printf("Semicolon needed between statements.\n");
             break;
         case 14:
-            printf("Cannot begin statement with this symbol\n");
+            printf("Cannot begin new statement with this symbol\n");
             break;
         case 15:
-            printf("Undeclared variable detected\n");
+            printf("Undeclared identifier detected\n");
             break;
         case 16:
             printf("Unclosed parenthesis detected\n");
@@ -98,6 +110,12 @@ void printError(int n){
             break;
         case 25:
             printf("Var or const detected more than once\n");
+            break;
+        case 26:
+            printf("Ident name declared twice\n");
+            break;
+        case 27:
+            printf("Reached end of program, no main detected\n");
             break;
         default:
             printf("An error has occurred.\n");
