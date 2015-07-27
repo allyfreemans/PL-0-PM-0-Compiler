@@ -1,0 +1,16 @@
+const n = 13;
+var i, h;
+
+procedure mappy;
+	var j, x;
+	begin
+		j := 1 + 1;
+		i := 2;
+		x := 3;
+	end;
+	
+begin
+	i := 3; 
+	h := 0;
+	call mappy;
+end.

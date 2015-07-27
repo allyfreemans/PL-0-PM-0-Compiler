@@ -1,0 +1,11 @@
+/* pop stack and print b value */
+const a = 1;
+var b, c;
+  begin
+    b := 2 + a;
+    c := 2 + a;
+  
+   write b;
+end. 
+
+

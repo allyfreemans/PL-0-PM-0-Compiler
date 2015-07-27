@@ -1,0 +1,18 @@
+/* test call procedure and assignment value */
+
+var n,h,i;      /*variable declaration*/
+    procedure sub;
+      const k = 7;
+      var j,h;
+      begin
+           j:=n;       
+           i:=1;
+           h:=k;       
+      end;
+
+    begin              
+      i:=3;
+      h:=0;
+      call sub;
+    end.
+

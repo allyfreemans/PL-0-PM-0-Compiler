@@ -214,14 +214,7 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
-various/
-project_info/
 *.docx
-*.zip
-*.depend
-*.save
-*.layout
-*.cbp
 *.zip
 *.gitattributes
 *.gitignore
