@@ -153,20 +153,7 @@ void execute_cycle(int flag){
 			break;
 		case CAL:	//call proced. at IR.M
 		    numCalls++;
-		    while(i < procPos){
-                if(procedures[i][0] == IR.M){
-                    i = procedures[i][1];
-                    break;
-                }
-                else
-                    i++;
-		    } //Returns expected lexical level
-            if(numCalls != i){
-                padding = numCalls-i;
-                additons[addPos++] = padding;
-                //printf("CAL L %2d wants +%d levels.\n",IR.M,padding);
-            }
-            else
+
                 padding = 0;
 		    stack[SP + 1] = 0; // return value (FV)
             stack[SP + 2] = base(IR.L, BP); // static link (SL)
@@ -220,11 +207,6 @@ void operate(){
 	switch (IR.M){
 		case RET:
 		    numCalls--;
-		    if(numCalls == 0){}//do nothing, you're in main
-		    else
-                padding = additons[addPos]-1;
-		    if(padding < 0)
-                padding = 0;
 			SP = BP - 1;
 			PC = stack[SP + 4];
 			BP = stack[SP + 3];
@@ -286,7 +268,7 @@ void operate(){
 
 int base (int level, int base){
 	while(level > 0){
-		base = stack[base + 2];
+		base = stack[base + 1];
 		level--;
 	}
 	return base;
