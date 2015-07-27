@@ -4,7 +4,7 @@
 #include "header.h"
 
 int main(int argc, char *argv[]){
-    int l=0,a=0,v=0,i=0;
+    int l=0,a=0,v=0,i=0,s=0;
 
     strcpy(inputFileName,"empty");
 
@@ -16,12 +16,14 @@ int main(int argc, char *argv[]){
                 a = 1;//print assembly code
             else if(strcmp(argv[i], "-v") == 0)
                 v = 1; //print virtual machine exec. trace
+            else if(strcmp(argv[i], "-s") == 0)
+                s = 1; //print virtual machine exec. trace
             else
                 strcpy(inputFileName,argv[i]); //optional input filename
         }
     }
     scanner(l);
-    parser(a);
+    parser(a,s);
     vm(v);
     return 0;
 }
