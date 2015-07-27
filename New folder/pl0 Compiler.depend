@@ -1,0 +1,50 @@
+# depslib dependency file v1.0
+1436245508 source:c:\users\creedtora\downloads\pl0 compiler\complier.c
+	<stdio.h>
+	"scanner.h"
+	"parser.h"
+	"vm.h"
+	"header.h"
+
+1437950853 c:\users\creedtora\downloads\pl0 compiler\scanner.h
+	"header.h"
+
+1437948997 c:\users\creedtora\downloads\pl0 compiler\header.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+
+1437952141 c:\users\creedtora\downloads\pl0 compiler\parser.h
+	"header.h"
+
+1437950031 c:\users\creedtora\downloads\pl0 compiler\vm.h
+	"header.h"
+
+1437948986 source:c:\users\creedtora\downloads\pl0 compiler\compiler.c
+	<stdio.h>
+	"scanner.h"
+	"parser.h"
+	"vm.h"
+	"header.h"
+
+1438014520 source:c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\compiler.c
+	"scanner.h"
+	"parser.h"
+	"vm.h"
+	"header.h"
+
+1438014384 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\scanner.h
+	"header.h"
+
+1438014508 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\header.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1438014509 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\parser.h
+	"header.h"
+
+1438014546 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\vm.h
+	"header.h"
+
