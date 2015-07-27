@@ -1,8 +1,15 @@
-var a;
-const m = 7, y = 1, n = 0;
-begin 
-   read a;
-   if a > m then a := 7 else a := 8;
-   if a = 7 then write y;
-   else if a = 8 then write n;
+var f, n;
+procedure fact;
+	var ans1;
+	begin 
+		ans1 := n;
+		n := n - 1;
+		if n = 0 then f := 1;
+		if n > 0 then call fact;
+		f := f * ans1;
+	end;
+begin
+	read n;
+	call fact;
+	write f;
 end.

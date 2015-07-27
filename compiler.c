@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "scanner.h"
 #include "parser.h"
 #include "vm.h"
@@ -24,6 +23,5 @@ int main(int argc, char *argv[]){
     scanner(l);
     parser(a);
     vm(v);
-
     return 0;
 }

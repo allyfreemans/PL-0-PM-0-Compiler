@@ -20,16 +20,10 @@ instruction IR;
 int stack[MAX_STACK_HEIGHT];
 instruction code[MAX_CODE_LENGTH];
 
-//Files
-FILE *fileCode;
-FILE *fileTrace;
-
-int add_one = 0, numCalls = 0, padding = 0, baseLex = 0;
-
 //Other
+int add_one = 0, numCalls = 0, padding = 0, baseLex = 0;
 int codeSize = 0;
-int additons[999];
-int addPos = 0;
+int additons[999], addPos = 0;
 
 //Functions
 void loadFile();
@@ -43,7 +37,6 @@ void printStack();
 void printToScreen(int flag);
 
 void vm(int flag){
-    int i;
     stack[1] = 0;
     stack[2] = 0;
     stack[3] = 0;
@@ -224,7 +217,6 @@ void execute_cycle(int flag){
 }
 
 void operate(){
-    int i = 0;
 	switch (IR.M){
 		case RET:
 		    numCalls--;
