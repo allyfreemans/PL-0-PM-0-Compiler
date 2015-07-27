@@ -1,14 +1,7 @@
 #include "header.h"
 
-//Files
-FILE *fileCode;
-FILE *fileCleanCode;
-FILE *fileLexTable;
-FILE *fileLexTableList;
-
 int tokenPos = 0;
-int rows = 1;
-int collumns = 0;
+int rows = 1, collumns = 0;
 
 //Functions
 void removeComments();

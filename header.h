@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 //User Defined (Changeable)
 #define nameMCode "mcode.txt"
@@ -22,9 +21,16 @@
 #ifndef GLB
 #define GLB
 
+//Files
+FILE *fileCode;
+FILE *fileCleanCode;
+FILE *fileLexTable;
+FILE *fileLexTableList;
+FILE *fileMCode;
+FILE *fileTrace;
+
 char inputFileName[999];
-int procedures[999][2]; //0=CAL line, 1=level
-int procPos = 0;
+int procedures[999][2], procPos = 0; //0=level 1= line
 
 typedef enum{
 	nulsym = 1, identsym, numbersym, plussym, minussym, multsym, slashsym,
@@ -135,15 +141,10 @@ typedef struct symbol {
 
 //Struct
 typedef struct instr{
-	int OP;
-	int L;
-	int M;
+	int OP; //For constants, you must store kind, name and value.
+	int L; //For variables, you must store kind, name, L and M.
+	int M; //For procedures, you must store kind, name, L and M.
 } instruction;
-/*
-For constants, you must store kind, name and value.
-For variables, you must store kind, name, L and M.
-For procedures, you must store kind, name, L and M.
-*/
 
 //Lex table
 typedef struct tokens{

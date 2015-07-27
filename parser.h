@@ -1,22 +1,16 @@
 #include "header.h"
 
-//Files
-FILE *fileMCode;
-
-//Global variables
+//Globals
 symTable symbolTable[MAX_SYMBOL_TABLE_SIZE];
 Token currentToken;
 int symTablePos = 0, tokenTablePos = 0;
 
 //Various
 instruction MCode[MAX_CODE_LENGTH];
-int MCodePos = 0;
-int currentM = 0;
-int lexLevel = 0;
+int MCodePos = 0, currentM = 0, lexLevel = 0;
 int column = 0, row = 1;
 int counted = 0, numProcedures = 0;
-int varLevel = 0, constLevel = 0;
-int varNum = 0, constNum = 0;
+int varLevel = 0, constLevel = 0, varNum = 0, constNum = 0;
 char currentProc[identMax];
 
 //Procedures
@@ -163,8 +157,8 @@ void varFound(){
         if(currentToken.type != identsym){
             printf("\nError: Line:%d, column:%d :: ",row,column);
             printError(8); //const/int/proc must have ident after
-        }
-        //Test to see if it exists already
+        }//Test to see if it exists already
+
         returner = searchSym(currentToken.name, lexLevel);
         if(returner != -1 && symbolTable[returner].level == lexLevel){
             printf("\nError: Line:%d, column:%d :: ",row,column);
