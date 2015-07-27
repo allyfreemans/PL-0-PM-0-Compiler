@@ -32,7 +32,7 @@ void toCode(int OP, int L, int M);
 void toFile();
 
 //Run the main section
-void parser(int flag){
+void parser(int flag, int flag2){
     int i;
 
     fileMCode = fopen(nameMCode,"w");
@@ -41,11 +41,14 @@ void parser(int flag){
 
     analyze();
     printf("\n=============================================\nNo errors, program is syntactically correct.\n=============================================\n\n");
-    printf("\n=============================================\nSymbol Table: kind name L M val\n=============================================\n\n");
-    for(i=0; i<symTablePos;i++){
-        printf("%d %s %d %d %d\n",symbolTable[i].kind,symbolTable[i].name,symbolTable[i].level,symbolTable[i].addr,symbolTable[i].val);
+
+    if(flag2){
+        printf("=============================================\nSymbol Table: kind name L M val\n=============================================\nKind       Name  L Pos Val\n");
+        for(i=0; i<symTablePos;i++){
+            printf("%4d %10s %2d %3d %3d\n",symbolTable[i].kind,symbolTable[i].name,symbolTable[i].level,symbolTable[i].addr,symbolTable[i].val);
+        }
+        printf("\n");
     }
-    printf("\n");
     toFile();
     fclose(fileMCode);
     printMCode(flag);

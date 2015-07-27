@@ -14,9 +14,9 @@
 #define MAX_STACK_HEIGHT 2000
 #define MAX_SYMBOL_TABLE_SIZE 2000
 #define MAX_CODE_LENGTH 2000
-#define MAX_LEXI_LEVELS 100
-#define identMax 12
-#define numMax 6
+#define MAX_LEXI_LEVELS 2000
+#define identMax 10
+#define numMax 10
 
 #ifndef GLB
 #define GLB

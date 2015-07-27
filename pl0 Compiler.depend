@@ -28,7 +28,7 @@
 	"vm.h"
 	"header.h"
 
-1438021572 source:c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\compiler.c
+1438034267 source:c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\compiler.c
 	"scanner.h"
 	"parser.h"
 	"vm.h"
@@ -37,14 +37,14 @@
 1438021572 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\scanner.h
 	"header.h"
 
-1438021572 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\header.h
+1438034411 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\header.h
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 
-1438021572 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\parser.h
+1438034653 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\parser.h
 	"header.h"
 
-1438030758 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\vm.h
+1438034226 c:\users\creedtora\downloads\pl0 compiler\pl0-compiler\vm.h
 	"header.h"
 
