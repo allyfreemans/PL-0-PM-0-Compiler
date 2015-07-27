@@ -1,8 +1,0 @@
-var a;
-const m = 7, y = 1, n = 0;
-begin 
-   read a;
-   if a > m then a := 7 else a := 8;
-   if a = 7 then write y;
-   else if a = 8 then write n;
-end.
