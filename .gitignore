@@ -214,6 +214,4 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
-lexemelist.txt
-lexemetable.txt
-cleaninput.txt
+New folder/*
