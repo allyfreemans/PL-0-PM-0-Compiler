@@ -214,4 +214,12 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
-New folder/*
+various/
+project_info/
+*.docx
+*.zip
+*.depend
+*.save
+*.layout
+*.cbp
+*.zip
