@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
             else if(strcmp(argv[i], "-v") == 0)
                 v = 1; //print virtual machine exec. trace
             else if(strcmp(argv[i], "-s") == 0)
-                s = 1; //print virtual machine exec. trace
+                s = 1; //print symbol table. "hidden"
             else
                 strcpy(inputFileName,argv[i]); //optional input filename
         }
