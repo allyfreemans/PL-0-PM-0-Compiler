@@ -92,14 +92,9 @@ void runCode(int flag, int flag2){
     char b[3];
     while (BP > 0){
         if (PC < codeSize){
-            a = PC;
-            strcpy(b,OPCODE_STRINGS[code[PC].OP]);
-            c = code[PC].L;
-            d = code[PC].M;
-
             if(flag)
-                printf("%3d %s %2d %3d ", a, b, c, d);
-            fprintf(fileTrace,"%3d %s %2d %3d ", a, b, c, d);
+                printf("%3d %s %2d %3d ", PC, OPCODE_STRINGS[code[PC].OP], code[PC].L, code[PC].M);
+            fprintf(fileTrace,"%3d %s %2d %3d ", PC, OPCODE_STRINGS[code[PC].OP], code[PC].L, code[PC].M);
 
             fetch_cycle();
             execute_cycle(flag2);
@@ -303,9 +298,10 @@ void printStack(int flag){
 }
 
 void printToScreen(int flag){
-    char scanned[99], c;
+    char scanned[99], c, hold;
     int run = 1;
     fileTrace = fopen(nameTrace, "r");
+    if(flag)
     printf("\n=============================================\nStack Trace:\n=============================================\n");
     if(flag){
         run = strcmp("pc",scanned);
@@ -317,9 +313,11 @@ void printToScreen(int flag){
         fscanf(fileTrace,"%s",scanned); // "sp"
         fscanf(fileTrace,"%s",scanned); // "stack"
         printf("                pc  bp  sp  stack");
+        c = fgetc(fileTrace);
         while(c != EOF){
-            c = fgetc(fileTrace);
+            if((int)c < 156)
             printf("%c", c);
+            c = fgetc(fileTrace);
         }
         printf("\n");
     }
