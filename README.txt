@@ -2,8 +2,6 @@
 
 pl/0 compiler, scanner, parser, etc.
 
-Group Members: Travis Le and Allysia Freeman
-
 In order to compile this program, please enter into the command line:
 
  	"gcc compiler.c -o compile"
