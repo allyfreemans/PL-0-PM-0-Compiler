@@ -25,3 +25,5 @@ Examples:
   "./compile -l -a -v" prints all output types to console
   "./compile -v" prints only the virtual machine trace to console
   "./compile" prints nothing except prompts for read and write
+
+Existing issues: The nested calling of procedures tends to confuse the poor program sometimes, so don't nest a million procedures please.
